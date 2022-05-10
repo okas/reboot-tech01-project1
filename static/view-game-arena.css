@@ -1,0 +1,59 @@
+* {
+  border: 1px solid rgb(0, 255, 60);
+}
+
+body {
+  /* ToDO: this must be dynamically changeable form JS! */
+  background-image: url(../assets/view-game-arena-theme-1.png);
+  background-position: top center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+#view-game-arena {
+  display: grid;
+  justify-items: center;
+  grid-template-columns: 20% 60% 20%;
+  grid-template-rows: auto;
+  grid-template-areas:
+    "header header header"
+    "aside main ."
+    "footer footer footer";
+  row-gap: 4rem;
+}
+
+#view-game-arena--main {
+  grid-area: main;
+  display: grid;
+  grid-template-columns: repeat(3, 20px);
+  grid-auto-flow: row;
+  gap: 1rem;
+
+}
+
+#view-game-arena--main > div {
+  height: 40px;
+  width: 40px;
+  background-color: rgba(0, 128, 0, 0.027);
+  border: 1px solid rgb(232, 241, 226);
+  text-align: center;
+  vertical-align: middle;
+}
+
+#view-game-arena aside {
+  grid-area: aside;
+}
+
+#view-game-arena header  {
+  grid-area: header;
+  display: inline-flex;
+  justify-content: center;
+}
+
+#view-game-arena header > div {
+  display: inline;
+}
+
+#view-game-arena footer {
+  grid-area: footer;
+}
