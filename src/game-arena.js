@@ -53,7 +53,11 @@ export class GameArena {
   }
 
   #resetCanvasLayout() {
-    this.#elemCanvas.style.gridTemplateColumns = `repeat(${this.#cols}, 40px)`;
+    const { gridTemplateColumns } = window.getComputedStyle(this.#elemCanvas);
+    const extractedColWidth = /\d+px/i.exec(gridTemplateColumns)[0];
+    const newValue = `repeat(${this.#cols}, ${extractedColWidth})`;
+
+    this.#elemCanvas.style.gridTemplateColumns = newValue;
   }
 
   #createBoard() {
