@@ -63,7 +63,7 @@ export class GameArena {
 
     // resultCells.push(this.#createTile(this.#getRandomTileKey(), 1));
 
-    [...rangeGenerator(this.#rows * this.#cols - 1, 1)].forEach((k) => {
+    [...rangeGenerator(this.#rows * this.#cols, 1)].forEach((k) => {
       // let randomTileKey = this.#getRandomTileKey();
 
       // const prevTileType = resultCells[k - 1].dataset.tileType;
