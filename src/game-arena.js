@@ -95,7 +95,12 @@ export class GameArena {
     const cell = new GameTile({ type, worth: 1, leverage: 1.25 });
     cell.id = id;
     cell.dataset.tileType = tileKey;
+    cell.onclick = this.#tileClickHandler.bind(this, tileKey);
 
     return cell;
+  }
+
+  #tileClickHandler(tileKey) {
+    console.log(tileKey);
   }
 }
