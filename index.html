@@ -5,8 +5,68 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="static/site.css" />
+    <link rel="stylesheet" href="static/view-game-arena.css" />
     <script type="module" src="./src/index.js"></script>
     <title>Reboot Crush, SAGA!</title>
   </head>
-  <body></body>
+  <body>
+    <div id="app">
+      <section id="view-start">
+        <header></header>
+        <main></main>
+        <footer></footer>
+      </section>
+      <section id="view-game-arena">
+        <header>
+          <!-- Here will be header: current level statistics etc -->
+          <div></div>
+          <div></div>
+          <div></div>
+        </header>
+        <aside>
+          <!-- For game statistics of current user  -->
+          <table>
+            <thead>
+              <tr>
+                <th>1. level</th>
+                <th>score</th>
+                <th>time</th>
+                <th>moves</th>
+              </tr>
+            </thead>
+          </table>
+        </aside>
+        <main></main>
+        <footer>
+          <div></div>
+          <div></div>
+          <div></div>
+        </footer>
+      </section>
+      <section id="view-next-round">
+        <headed></headed>
+        <table>
+          <thead>
+            <tr>
+              <th>1. level</th>
+              <th>score</th>
+              <th>time</th>
+              <th>moves</th>
+            </tr>
+          </thead>
+        </table>
+        <article>
+          <img />
+          <p>#Encouraging message#</p>
+        </article>
+        <main></main>
+        <footer></footer>
+      </section>
+      <section id="view-game-over">
+        <headed></headed>
+        <main></main>
+        <footer></footer>
+      </section>
+    </div>
+  </body>
 </html>
