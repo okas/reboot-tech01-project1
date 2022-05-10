@@ -57,7 +57,7 @@ export class GameArena {
   }
 
   #createBoard() {
-    let toAvoid = undefined;
+    // let toAvoid = undefined;
 
     const resultCells = [];
 
