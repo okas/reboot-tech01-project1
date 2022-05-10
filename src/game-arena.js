@@ -61,13 +61,12 @@ export class GameArena {
   }
 
   #createBoard() {
-    // let toAvoid = undefined;
-
     const resultCells = [];
 
+    // const resultCells = [];
     // resultCells.push(this.#createTile(this.#getRandomTileKey(), 1));
-
-    [...rangeGenerator(this.#rows * this.#cols, 1)].forEach((k) => {
+    // let toAvoid = undefined;
+    for (const k of rangeGenerator(this.#rows * this.#cols, 1)) {
       // let randomTileKey = this.#getRandomTileKey();
 
       // const prevTileType = resultCells[k - 1].dataset.tileType;
@@ -80,9 +79,8 @@ export class GameArena {
       //   } while (toAvoid === randomTileKey);
       //   toAvoid = undefined;
       // }
-
       resultCells.push(this.#createTile(this.#getRandomTileKey(), k));
-    });
+    }
 
     return resultCells;
   }
