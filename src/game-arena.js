@@ -14,12 +14,17 @@ export class GameArena {
 
   #tileTypeToClassMap;
 
-  constructor({ canvasId = "canvasId", timerInterval = 200 }) {
+  constructor({
+    canvasId = "canvasId",
+    rows = 7,
+    cols = 7,
+    timerInterval = 200,
+  }) {
     this.#canvasId = canvasId;
     this.#timerInterval = timerInterval;
 
-    this.#rows = 7;
-    this.#cols = 7;
+    this.#rows = rows;
+    this.#cols = cols;
     this.#timerId = null;
 
     this.#tileTypeToClassMap = new Map([
