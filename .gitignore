@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Custom exclusions
+reboot-tech01-project1.code-workspace
