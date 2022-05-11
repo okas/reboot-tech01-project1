@@ -29,7 +29,6 @@ body {
   grid-template-columns: repeat(3, 40px);
   grid-auto-flow: row;
   gap: 1rem;
-
 }
 
 #game-canvas > div {
@@ -44,7 +43,7 @@ body {
   grid-area: aside;
 }
 
-#view-game-arena header  {
+#view-game-arena header {
   grid-area: header;
   display: inline-flex;
   justify-content: center;
