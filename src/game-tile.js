@@ -23,6 +23,30 @@ export class GameTile extends HTMLDivElement {
     return this.#leverage;
   }
 
+  get isPicked() {
+    return this.className === "picked";
+  }
+
+  get isTarget() {
+    return this.className === "target";
+  }
+
+  setPicked() {
+    this.classList.add("picked");
+  }
+
+  unSetPicked() {
+    this.classList.remove("picked");
+  }
+
+  setTarget() {
+    this.classList.add("target");
+  }
+
+  unSetTarget() {
+    this.classList.remove("target");
+  }
+
   connectedCallback() {
     this.classList.add(this.#type);
   }

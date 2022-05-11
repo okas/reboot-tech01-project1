@@ -25,3 +25,13 @@
 .type-7 {
   background-color: purple;
 }
+
+.picked {
+  outline: 0.5rem inset orange;
+  outline-offset: -0.5rem;
+}
+
+.target {
+  outline: 0.5rem inset greenyellow;
+  outline-offset: -0.5rem;
+}

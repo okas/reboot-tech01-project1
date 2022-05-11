@@ -107,12 +107,49 @@ export class GameArena {
     const cell = new GameTile({ type, worth: 1, leverage: 1.25 });
     cell.id = id;
     cell.dataset.tileType = tileKey;
-    cell.onclick = this.#tileClickHandler.bind(this, tileKey);
+    cell.onclick = this.#tileClickHandler.bind(this);
 
     return cell;
   }
 
-  #tileClickHandler(tileKey) {
-    console.log(tileKey);
+  /**
+   * @param  {Event & {target: GameTile}} {clickedTile}
+   */
+  #tileClickHandler({ target: clickedTile }) {
+    // To guarantee, that only two, consequent tile can be clicked.
+    // If not consequent then set update states, and "release" the second attempted tile.
+    if (!this.#elemFirstTile) {
+      this.#elemFirstTile = clickedTile;
+      this.#elemFirstTile.setPicked();
+    } else if (
+      !this.#elemSecondTile &&
+      this.#targetIsOnSide(this.#elemFirstTile, clickedTile)
+    ) {
+      this.#elemSecondTile = clickedTile;
+      this.#elemSecondTile.setTarget();
+    } else if (
+      this.#elemFirstTile &&
+      !this.#targetIsOnSide(this.#elemFirstTile, clickedTile)
+    ) {
+      this.#elemFirstTile.unSetPicked();
+      this.#elemSecondTile?.unSetTarget();
+      this.#elemFirstTile = clickedTile;
+      this.#elemFirstTile.setPicked();
+      this.#elemSecondTile = null;
+    }
+  }
+
+  /**
+   * @param  {GameTile} picked
+   * @param  {GameTile} target
+   */
+  #targetIsOnSide({ id: pId }, { id: tId }) {
+    switch (Math.abs(pId - tId)) {
+      case 1:
+      case this.#cols:
+        return true;
+      default:
+        return false;
+    }
   }
 }
