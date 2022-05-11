@@ -20,9 +20,9 @@ export class GameArena {
   /** @type GameTile[] */
   #elemTiles;
   /** @type GameTile */
-  #elemFirstTile;
+  #elemPickedTile;
   /** @type GameTile */
-  #elemSecondTile;
+  #elemTargetTile;
 
   #tileTypeToClassMap;
 
@@ -117,7 +117,7 @@ export class GameArena {
    */
   #tileClickHandler({ target: clickedTile }) {
     const startMatchSeeking = this.#manageAndValidateSelection(clickedTile);
-    console.log(startMatchSeeking);
+    // console.log(startMatchSeeking);
 
     if (startMatchSeeking) {
       const fullMatch = this.#detectMatchXY();
@@ -127,11 +127,23 @@ export class GameArena {
   }
 
   #detectMatchXY() {
+    const pickedTileType = this.#elemPickedTile.type;
+    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
+    const seekIndex = this.#elemTiles.indexOf(this.#elemTargetTile);
+
     const matchesOnAxes = [
-      [...this.#gatherSeekToLeft(), ...this.#gatherSeekToRight()],
-      [...this.#gatherSeekToUp(), ...this.#gatherSeekToDown()],
+      [
+        ...this.#gatherSeekToLeft(pickedTileType, seekIndex),
+        ...this.#gatherSeekToRight(pickedTileType, seekIndex),
+      ],
+      [
+        ...this.#gatherSeekToUp(pickedTileType, seekIndex),
+        ...this.#gatherSeekToDown(pickedTileType, seekIndex),
+      ],
     ];
 
+    // TODO: Pay attention to swapping operation order!
+    // TODO: If it is done, then condition be different!
     const hasMatchOnX = matchesOnAxes[0].length >= 2;
     const hasMatchOnY = matchesOnAxes[1].length >= 2;
 
@@ -140,68 +152,68 @@ export class GameArena {
       : null;
   }
 
-  *#gatherSeekToLeft() {
-    const firstTileType = this.#elemFirstTile.type;
+  *#gatherSeekToLeft(pickedTileType, seekIndex) {
+    while (!this.#detectEdgeLeft(seekIndex)) {
+      const testTile = this.#elemTiles[--seekIndex]; // step left!
 
-    // TODO add edge detection!
+      if (testTile.type !== pickedTileType) {
+        return;
+      }
 
-    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
-    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) - 1; // -1 for moving left
-
-    let testTile = this.#elemTiles[seekIndex];
-
-    while (testTile.type === firstTileType) {
       yield testTile;
-      testTile = this.#elemTiles[--seekIndex];
     }
   }
 
-  *#gatherSeekToUp() {
-    const firstTileType = this.#elemFirstTile.type;
+  *#gatherSeekToUp(pickedTileType, seekIndex) {
+    while (!this.#detectEdgeUp(seekIndex)) {
+      const testTile = this.#elemTiles[(seekIndex -= this.#rows)]; // step up!
 
-    // TODO add edge detection!
+      if (testTile.type !== pickedTileType) {
+        return;
+      }
 
-    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
-    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) - this.#rows; // -1 for moving up
-
-    let testTile = this.#elemTiles[seekIndex];
-
-    while (testTile.type === firstTileType) {
       yield testTile;
-      testTile = this.#elemTiles[(seekIndex -= this.#rows)];
     }
   }
 
-  *#gatherSeekToRight() {
-    const firstTileType = this.#elemFirstTile.type;
+  *#gatherSeekToRight(pickedTileType, seekIndex) {
+    while (!this.#detectEdgeRight(seekIndex)) {
+      const testTile = this.#elemTiles[++seekIndex]; // step right!
 
-    // TODO add edge detection!
+      if (testTile.type !== pickedTileType) {
+        return;
+      }
 
-    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
-    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) + 1; // +1 for moving right
-
-    let testTile = this.#elemTiles[seekIndex];
-
-    while (testTile.type === firstTileType) {
       yield testTile;
-      testTile = this.#elemTiles[++seekIndex];
     }
   }
 
-  *#gatherSeekToDown() {
-    const firstTileType = this.#elemFirstTile.type;
+  *#gatherSeekToDown(pickedTileType, seekIndex) {
+    while (!this.#detectEdgeDown(seekIndex)) {
+      const testTile = this.#elemTiles[(seekIndex += this.#rows)]; // step up!
 
-    // TODO add edge detection!
+      if (testTile.type !== pickedTileType) {
+        return;
+      }
 
-    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
-    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) + this.#rows; // +1 row for moving down
-
-    let testTile = this.#elemTiles[seekIndex];
-
-    while (testTile.type === firstTileType) {
       yield testTile;
-      testTile = this.#elemTiles[(seekIndex += this.#rows)];
     }
+  }
+
+  #detectEdgeLeft(seekIndex) {
+    return !((seekIndex / this.#cols) % 1);
+  }
+
+  #detectEdgeUp(seekIndex) {
+    return seekIndex < this.#cols;
+  }
+
+  #detectEdgeRight(seekIndex) {
+    return !(((seekIndex + 1) / this.#cols) % 1);
+  }
+
+  #detectEdgeDown(seekIndex) {
+    return seekIndex >= this.#rows * this.#cols - this.#rows;
   }
 
   /**
@@ -211,36 +223,36 @@ export class GameArena {
     // To guarantee, that only two, consequent tile can be clicked.
     // If not consequent then set update states and "release" the second attempted tile.
     if (
-      this.#elemFirstTile &&
-      !this.#elemSecondTile &&
+      this.#elemPickedTile &&
+      !this.#elemTargetTile &&
       this.#isSecondTileOnSide(clickedTile)
     ) {
       // Scenario of 2 consequent tiles: set the states and...
-      this.#elemSecondTile = clickedTile;
-      this.#elemSecondTile.setTarget();
+      this.#elemTargetTile = clickedTile;
+      this.#elemTargetTile.setTarget();
       // ... start match evaluation
 
       return true;
     }
 
-    if (!this.#elemFirstTile) {
+    if (!this.#elemPickedTile) {
       // First element will be picked
-      this.#elemFirstTile = clickedTile;
-      this.#elemFirstTile.setPicked();
+      this.#elemPickedTile = clickedTile;
+      this.#elemPickedTile.setPicked();
 
       return false;
     }
 
     if (
-      this.#elemFirstTile &&
-      (this.#elemSecondTile || !this.#isSecondTileOnSide(clickedTile))
+      this.#elemPickedTile &&
+      (this.#elemTargetTile || !this.#isSecondTileOnSide(clickedTile))
     ) {
       // Wrong 2nd tile clicked OR both already clicked: reset states and set new picked immediately.
-      this.#elemFirstTile.unSetPicked();
-      this.#elemSecondTile?.unSetTarget();
-      this.#elemFirstTile = clickedTile;
-      this.#elemFirstTile.setPicked();
-      this.#elemSecondTile = null;
+      this.#elemPickedTile.unSetPicked();
+      this.#elemTargetTile?.unSetTarget();
+      this.#elemPickedTile = clickedTile;
+      this.#elemPickedTile.setPicked();
+      this.#elemTargetTile = null;
 
       return false;
     }
@@ -252,7 +264,7 @@ export class GameArena {
    * @param  {GameTile} target
    */
   #isSecondTileOnSide({ id: tId }) {
-    switch (Math.abs(this.#elemFirstTile.id - tId)) {
+    switch (Math.abs(this.#elemPickedTile.id - tId)) {
       case 1:
       case this.#cols:
         return true;
