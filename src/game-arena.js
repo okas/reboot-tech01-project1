@@ -138,11 +138,17 @@ export class GameArena {
       // ... start match evaluation
 
       return true;
-    } else if (!this.#elemFirstTile) {
+    }
+
+    if (!this.#elemFirstTile) {
       // First element will be picked
       this.#elemFirstTile = clickedTile;
       this.#elemFirstTile.setPicked();
-    } else if (
+
+      return false;
+    }
+
+    if (
       this.#elemFirstTile &&
       (this.#elemSecondTile || !this.#isSecondTileOnSide(clickedTile))
     ) {
@@ -152,6 +158,8 @@ export class GameArena {
       this.#elemFirstTile = clickedTile;
       this.#elemFirstTile.setPicked();
       this.#elemSecondTile = null;
+
+      return false;
     }
 
     return false;
