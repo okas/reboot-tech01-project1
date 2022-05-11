@@ -2,15 +2,27 @@ import { GameTile } from "./game-tile.js";
 import { rangeGenerator } from "./utilities.js";
 
 export class GameArena {
+  /** @typ string */
   #canvasId;
+  /** @type number */
   #rows;
+  /** @type number */
   #cols;
 
+  /** @type number */
   #timerId;
+  /** @type number */
   #timerInterval;
 
+  /** @type HTMLElement */
   #elemCanvas;
+
+  /** @type GameTile[] */
   #elemCells;
+  /** @type GameTile */
+  #elemFirstTile;
+  /** @type GameTile */
+  #elemSecondTile;
 
   #tileTypeToClassMap;
 
