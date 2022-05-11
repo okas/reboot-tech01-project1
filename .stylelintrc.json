@@ -2,5 +2,7 @@
   "extends": ["stylelint-config-standard", "stylelint-config-prettier"],
   "ignoreFiles": ["**/*.js"],
   "overrides": [],
-  "configBasedir": "./"
+  "rules": {
+    "max-empty-lines": 2
+  }
 }

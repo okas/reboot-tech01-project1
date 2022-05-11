@@ -5,7 +5,7 @@ module.exports = {
     browser: true,
     node: true,
   },
-  extends: ["eslint:recommended", "prettier", "plugin:json/recommended"],
+  extends: ["standard", "prettier", "plugin:json/recommended"],
   parserOptions: {
     parser: "@typescript-eslint/parser",
     sourceType: "module",
