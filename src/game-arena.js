@@ -18,7 +18,7 @@ export class GameArena {
   #elemCanvas;
 
   /** @type GameTile[] */
-  #elemCells;
+  #elemTiles;
   /** @type GameTile */
   #elemFirstTile;
   /** @type GameTile */
@@ -60,8 +60,8 @@ export class GameArena {
 
   #resetCanvas() {
     this.#resetCanvasLayout();
-    this.#elemCells = this.#createBoard();
-    this.#elemCanvas.replaceChildren(...this.#elemCells);
+    this.#elemTiles = this.#createBoard();
+    this.#elemCanvas.replaceChildren(...this.#elemTiles);
   }
 
   #resetCanvasLayout() {
@@ -117,8 +117,91 @@ export class GameArena {
    */
   #tileClickHandler({ target: clickedTile }) {
     const startMatchSeeking = this.#manageAndValidateSelection(clickedTile);
-
     console.log(startMatchSeeking);
+
+    if (startMatchSeeking) {
+      const fullMatch = this.#detectMatchXY();
+
+      console.log(fullMatch);
+    }
+  }
+
+  #detectMatchXY() {
+    const matchesOnAxes = [
+      [...this.#gatherSeekToLeft(), ...this.#gatherSeekToRight()],
+      [...this.#gatherSeekToUp(), ...this.#gatherSeekToDown()],
+    ];
+
+    const hasMatchOnX = matchesOnAxes[0].length >= 2;
+    const hasMatchOnY = matchesOnAxes[1].length >= 2;
+
+    return hasMatchOnX || hasMatchOnY
+      ? { hasMatchOnX, hasMatchOnY, matchesOnAxes }
+      : null;
+  }
+
+  *#gatherSeekToLeft() {
+    const firstTileType = this.#elemFirstTile.type;
+
+    // TODO add edge detection!
+
+    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
+    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) - 1; // -1 for moving left
+
+    let testTile = this.#elemTiles[seekIndex];
+
+    while (testTile.type === firstTileType) {
+      yield testTile;
+      testTile = this.#elemTiles[--seekIndex];
+    }
+  }
+
+  *#gatherSeekToUp() {
+    const firstTileType = this.#elemFirstTile.type;
+
+    // TODO add edge detection!
+
+    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
+    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) - this.#rows; // -1 for moving up
+
+    let testTile = this.#elemTiles[seekIndex];
+
+    while (testTile.type === firstTileType) {
+      yield testTile;
+      testTile = this.#elemTiles[(seekIndex -= this.#rows)];
+    }
+  }
+
+  *#gatherSeekToRight() {
+    const firstTileType = this.#elemFirstTile.type;
+
+    // TODO add edge detection!
+
+    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
+    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) + 1; // +1 for moving right
+
+    let testTile = this.#elemTiles[seekIndex];
+
+    while (testTile.type === firstTileType) {
+      yield testTile;
+      testTile = this.#elemTiles[++seekIndex];
+    }
+  }
+
+  *#gatherSeekToDown() {
+    const firstTileType = this.#elemFirstTile.type;
+
+    // TODO add edge detection!
+
+    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
+    let seekIndex = this.#elemTiles.indexOf(this.#elemSecondTile) + this.#rows; // +1 row for moving down
+
+    let testTile = this.#elemTiles[seekIndex];
+
+    while (testTile.type === firstTileType) {
+      yield testTile;
+      testTile = this.#elemTiles[(seekIndex += this.#rows)];
+    }
   }
 
   /**

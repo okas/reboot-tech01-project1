@@ -1,8 +1,18 @@
+/**
+ * @typedef {Object} Config
+ * @property {string} type
+ * @property {number} worth
+ * @property {number} leverage
+ */
+
 export class GameTile extends HTMLDivElement {
   #type;
   #worth;
   #leverage;
 
+  /**
+   * @param {Config}
+   */
   constructor({ type, worth, leverage }) {
     super();
 
