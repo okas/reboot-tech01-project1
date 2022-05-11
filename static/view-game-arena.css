@@ -1,10 +1,10 @@
 * {
-  border: 1px solid rgb(0, 255, 60);
+  border: 1px solid rgb(0 255 60);
 }
 
 body {
   /* ToDO: this must be dynamically changeable form JS! */
-  background-image: url(../assets/view-game-arena-theme-1.png);
+  background-image: url("../assets/view-game-arena-theme-1.png");
   background-position: top center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -13,7 +13,8 @@ body {
 #view-game-arena {
   display: grid;
   justify-items: center;
-  grid-template-columns: 20% 60% 20%;
+
+  /* grid-template-columns: 20% 60% 20%; */
   grid-template-rows: auto;
   grid-template-areas:
     "header header header"
@@ -22,7 +23,7 @@ body {
   row-gap: 4rem;
 }
 
-#view-game-arena--main {
+#game-canvas {
   grid-area: main;
   display: grid;
   grid-template-columns: repeat(3, 40px);
@@ -31,10 +32,10 @@ body {
 
 }
 
-#view-game-arena--main > div {
+#game-canvas > div {
   height: 40px;
   width: 40px;
-  border: 1px solid rgb(232, 241, 226);
+  border: 1px solid rgb(232 241 226);
   text-align: center;
   vertical-align: middle;
 }

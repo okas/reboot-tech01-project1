@@ -55,7 +55,7 @@ export class GameArena {
   }
 
   #initDOM() {
-    this.#elemCanvas = document.getElementById("view-game-arena--main");
+    this.#elemCanvas = document.getElementById("game-canvas");
   }
 
   #resetCanvas() {
