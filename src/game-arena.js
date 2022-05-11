@@ -116,35 +116,49 @@ export class GameArena {
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
   #tileClickHandler({ target: clickedTile }) {
+    const startMatchSeeking = this.#manageAndValidateSelection(clickedTile);
+
+    console.log(startMatchSeeking);
+  }
+
+  /**
+   * @param  {GameTile} clickedTile
+   */
+  #manageAndValidateSelection(clickedTile) {
     // To guarantee, that only two, consequent tile can be clicked.
-    // If not consequent then set update states, and "release" the second attempted tile.
-    if (!this.#elemFirstTile) {
-      this.#elemFirstTile = clickedTile;
-      this.#elemFirstTile.setPicked();
-    } else if (
+    // If not consequent then set update states and "release" the second attempted tile.
+    if (
+      this.#elemFirstTile &&
       !this.#elemSecondTile &&
-      this.#targetIsOnSide(this.#elemFirstTile, clickedTile)
+      this.#isSecondTileOnSide(clickedTile)
     ) {
+      // Scenario of 2 consequent tiles: set the states and...
       this.#elemSecondTile = clickedTile;
       this.#elemSecondTile.setTarget();
-    } else if (
-      this.#elemFirstTile &&
-      !this.#targetIsOnSide(this.#elemFirstTile, clickedTile)
-    ) {
+      // ... start match evaluation
+
+      return true;
+    } else if (!this.#elemFirstTile) {
+      // First element will be picked
+      this.#elemFirstTile = clickedTile;
+      this.#elemFirstTile.setPicked();
+    } else if (this.#elemFirstTile && !this.#isSecondTileOnSide(clickedTile)) {
+      // Wrong 2nd tile clicked: reset states and set new picked immediately.
       this.#elemFirstTile.unSetPicked();
       this.#elemSecondTile?.unSetTarget();
       this.#elemFirstTile = clickedTile;
       this.#elemFirstTile.setPicked();
       this.#elemSecondTile = null;
     }
+
+    return false;
   }
 
   /**
-   * @param  {GameTile} picked
    * @param  {GameTile} target
    */
-  #targetIsOnSide({ id: pId }, { id: tId }) {
-    switch (Math.abs(pId - tId)) {
+  #isSecondTileOnSide({ id: tId }) {
+    switch (Math.abs(this.#elemFirstTile.id - tId)) {
       case 1:
       case this.#cols:
         return true;
