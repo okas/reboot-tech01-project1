@@ -142,8 +142,11 @@ export class GameArena {
       // First element will be picked
       this.#elemFirstTile = clickedTile;
       this.#elemFirstTile.setPicked();
-    } else if (this.#elemFirstTile && !this.#isSecondTileOnSide(clickedTile)) {
-      // Wrong 2nd tile clicked: reset states and set new picked immediately.
+    } else if (
+      this.#elemFirstTile &&
+      (this.#elemSecondTile || !this.#isSecondTileOnSide(clickedTile))
+    ) {
+      // Wrong 2nd tile clicked OR both already clicked: reset states and set new picked immediately.
       this.#elemFirstTile.unSetPicked();
       this.#elemSecondTile?.unSetTarget();
       this.#elemFirstTile = clickedTile;
