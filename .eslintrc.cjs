@@ -8,6 +8,7 @@ module.exports = {
   extends: ["eslint:recommended", "prettier", "plugin:json/recommended"],
   parserOptions: {
     parser: "@typescript-eslint/parser",
+    sourceType: "module",
   },
   plugins: ["@typescript-eslint"],
   rules: {},
