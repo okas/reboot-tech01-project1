@@ -35,3 +35,7 @@
   outline: 0.5rem inset rgb(218 78 187);
   outline-offset: -0.5rem;
 }
+
+.hidden {
+  visibility: hidden;
+}
