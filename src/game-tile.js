@@ -43,18 +43,22 @@ export class GameTile extends HTMLDivElement {
 
   setPicked() {
     this.classList.add("picked");
+    return this;
   }
 
   unSetPicked() {
     this.classList.remove("picked");
+    return this;
   }
 
   setTarget() {
     this.classList.add("target");
+    return this;
   }
 
   unSetTarget() {
     this.classList.remove("target");
+    return this;
   }
 
   connectedCallback() {
