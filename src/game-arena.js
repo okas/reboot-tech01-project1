@@ -137,18 +137,28 @@ export class GameArena {
 
     if (!matchInfo) {
       this.#handleUserBadSelection();
+    } else {
+      this.#hideMatch(matchInfo);
+      this.#resetUserSelection();
     }
 
     // TODO: ensure, that after successful selection selection will be reset!
-    // this.#resetUserSelection();
+    // At least keep an eye on this nuance!
   }
 
   #handleUserBadSelection() {
     const id = setTimeout(() => {
+      clearTimeout(id);
       this.#swapSelectedTiles();
       this.#resetUserSelection();
-      clearTimeout(id);
     }, this.#badSwapTimeout);
+  }
+
+  /**
+   * @param {MatchInfo} matchInfo
+   */
+  #hideMatch(matchInfo) {
+    matchInfo.all.forEach((tile) => tile.setHidden());
   }
 
   /**

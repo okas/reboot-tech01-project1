@@ -41,6 +41,10 @@ export class GameTile extends HTMLDivElement {
     return this.className === "target";
   }
 
+  get isHidden() {
+    return this.className === "hidden";
+  }
+
   setPicked() {
     this.classList.add("picked");
     return this;
@@ -58,6 +62,16 @@ export class GameTile extends HTMLDivElement {
 
   unSetTarget() {
     this.classList.remove("target");
+    return this;
+  }
+
+  setHidden() {
+    this.classList.add("hidden");
+    return this;
+  }
+
+  unSetHidden() {
+    this.classList.remove("hidden");
     return this;
   }
 
