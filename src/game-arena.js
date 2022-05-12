@@ -117,14 +117,21 @@ export class GameArena {
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
   #tileClickHandler({ target: clickedTile }) {
-    const startMatchSeeking = this.#manageAndValidateSelection(clickedTile);
-    console.log(startMatchSeeking);
+    const intendedSwapDirection = this.#manageAndValidateSelection(clickedTile);
+    console.debug(intendedSwapDirection);
 
-    if (startMatchSeeking) {
-      const fullMatch = this.#detectMatchXY();
-
-      console.log(fullMatch);
+    if (!intendedSwapDirection) {
+      return;
     }
+
+    this.#swapSelectedTiles(intendedSwapDirection);
+
+    // setInterval(() => this.#swapSelectedTiles(intendedSwapDirection), 2000);
+
+    const fullMatch = this.#detectMatchXY();
+    console.debug(fullMatch);
+
+    this.#resetUserSelection();
   }
 
   /**
@@ -135,8 +142,8 @@ export class GameArena {
   #swapSelectedTiles(direction) {
     // TODO, set up timer, to swap back, if no mach found.
 
-    const idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
-    const idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
+    let idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
+    let idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
 
     if (!idxPicked || !idxTarget) {
       throw new Error(
@@ -144,7 +151,11 @@ export class GameArena {
       );
     }
 
-    console.debug("before swapping: ", idxPicked, idxTarget);
+    console.debug(
+      "Selected indices **before** swapping: ",
+      idxPicked,
+      idxTarget
+    );
 
     // Put picked tile to target tile's place; remove target tile...
     const orphan = this.#elemCanvas.replaceChild(
@@ -153,6 +164,14 @@ export class GameArena {
     );
     // ...and put temporarily orphaned target tile to picked tiles place.
     this.#elemCanvas.insertBefore(orphan, this.#elemTiles.item(idxPicked));
+
+    idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
+    idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
+    console.debug(
+      "Selected indices **after** swapping: ",
+      idxPicked,
+      idxTarget
+    );
   }
 
   #detectMatchXY() {
@@ -280,16 +299,20 @@ export class GameArena {
       (this.#elemTargetTile || !(x = this.#isSecondTileOnSide(clickedTile)))
     ) {
       // Wrong 2nd tile clicked OR both already clicked: reset states and set new picked immediately.
-      this.#elemPickedTile.unSetPicked();
-      this.#elemTargetTile?.unSetTarget();
+      this.#resetUserSelection();
       this.#elemPickedTile = clickedTile;
       this.#elemPickedTile.setPicked();
-      this.#elemTargetTile = null;
 
       return x;
     }
 
     return undefined;
+  }
+
+  #resetUserSelection() {
+    this.#elemPickedTile?.unSetPicked().unSetTarget();
+    this.#elemTargetTile?.unSetPicked().unSetTarget();
+    this.#elemPickedTile = this.#elemTargetTile = null;
   }
 
   /**
