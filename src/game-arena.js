@@ -175,29 +175,33 @@ export class GameArena {
   }
 
   #detectMatchXY() {
-    const pickedTileType = this.#elemPickedTile.type;
-    // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
-    const seekIndex = this.#elemTiles.indexOf(this.#elemTargetTile);
+    const mInfo = this.#obtainDirectionalMatchInfo();
 
-    const matchesOnAxes = [
-      [
-        ...this.#gatherSeekToLeft(pickedTileType, seekIndex),
-        ...this.#gatherSeekToRight(pickedTileType, seekIndex),
-      ],
-      [
-        ...this.#gatherSeekToUp(pickedTileType, seekIndex),
-        ...this.#gatherSeekToDown(pickedTileType, seekIndex),
-      ],
-    ];
+    const matchX =
+      mInfo.left.length >= 1 || mInfo.right.length >= 1
+        ? [...mInfo.left, this.#elemPickedTile, ...mInfo.right]
+        : null;
 
-    // TODO: Pay attention to swapping operation order!
-    // TODO: If it is done, then condition be different!
-    const hasMatchOnX = matchesOnAxes[0].length >= 2;
-    const hasMatchOnY = matchesOnAxes[1].length >= 2;
+    const matchY =
+      mInfo.up.length >= 1 || mInfo.down.length >= 1
+        ? [...mInfo.up, this.#elemPickedTile, ...mInfo.down]
+        : null;
 
-    return hasMatchOnX || hasMatchOnY
-      ? { hasMatchOnX, hasMatchOnY, matchesOnAxes }
+    return matchX?.length >= 3 || matchY?.length >= 3
+      ? { matchX, matchY }
       : null;
+  }
+
+  #obtainDirectionalMatchInfo() {
+    const pickedTileType = this.#elemPickedTile.type;
+    const idxSeek = this.#elemTiles.indexOf(this.#elemPickedTile);
+
+    return {
+      left: [...this.#gatherSeekToLeft(pickedTileType, idxSeek)],
+      right: [...this.#gatherSeekToRight(pickedTileType, idxSeek)],
+      up: [...this.#gatherSeekToUp(pickedTileType, idxSeek)],
+      down: [...this.#gatherSeekToDown(pickedTileType, idxSeek)],
+    };
   }
 
   *#gatherSeekToLeft(pickedTileType, seekIndex) {
