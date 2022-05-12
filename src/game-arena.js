@@ -17,7 +17,7 @@ export class GameArena {
   /** @type HTMLElement */
   #elemCanvas;
 
-  /** @type GameTile[] */
+  /** @type HTMLCollection */
   #elemTiles;
   /** @type GameTile */
   #elemPickedTile;
@@ -62,6 +62,7 @@ export class GameArena {
     this.#resetCanvasLayout();
     this.#elemCanvas.replaceChildren(...this.#createBoard());
     this.#elemTiles = this.#elemCanvas.children;
+    this.#elemTiles.indexOf = Array.prototype.indexOf;
   }
 
   #resetCanvasLayout() {
@@ -116,14 +117,61 @@ export class GameArena {
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
   #tileClickHandler({ target: clickedTile }) {
-    const startMatchSeeking = this.#manageAndValidateSelection(clickedTile);
-    // console.log(startMatchSeeking);
+    const intendedSwapDirection = this.#manageAndValidateSelection(clickedTile);
+    console.debug(intendedSwapDirection);
 
-    if (startMatchSeeking) {
-      const fullMatch = this.#detectMatchXY();
-
-      console.log(fullMatch);
+    if (!intendedSwapDirection) {
+      return;
     }
+
+    this.#swapSelectedTiles(intendedSwapDirection);
+
+    // setInterval(() => this.#swapSelectedTiles(intendedSwapDirection), 2000);
+
+    const fullMatch = this.#detectMatchXY();
+    console.debug(fullMatch);
+
+    this.#resetUserSelection();
+  }
+
+  /**
+   * Performs tile swapping in DOM. Uses fields `#elemPickedTile` and
+   * `#elemTargetTile` to determine swap positions.
+   * @param  {string} direction `left` | `up` | `right` | `down`
+   */
+  #swapSelectedTiles(direction) {
+    // TODO, set up timer, to swap back, if no mach found.
+
+    let idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
+    let idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
+
+    if (!idxPicked || !idxTarget) {
+      throw new Error(
+        "Tile swapping failed: at least one of the subjected tiles is not selected."
+      );
+    }
+
+    console.debug(
+      "Selected indices **before** swapping: ",
+      idxPicked,
+      idxTarget
+    );
+
+    // Put picked tile to target tile's place; remove target tile...
+    const orphan = this.#elemCanvas.replaceChild(
+      this.#elemPickedTile,
+      this.#elemTargetTile
+    );
+    // ...and put temporarily orphaned target tile to picked tiles place.
+    this.#elemCanvas.insertBefore(orphan, this.#elemTiles.item(idxPicked));
+
+    idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
+    idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
+    console.debug(
+      "Selected indices **after** swapping: ",
+      idxPicked,
+      idxTarget
+    );
   }
 
   #detectMatchXY() {
@@ -222,17 +270,20 @@ export class GameArena {
   #manageAndValidateSelection(clickedTile) {
     // To guarantee, that only two, consequent tile can be clicked.
     // If not consequent then set update states and "release" the second attempted tile.
+
+    let x;
+
     if (
       this.#elemPickedTile &&
       !this.#elemTargetTile &&
-      this.#isSecondTileOnSide(clickedTile)
+      (x = this.#isSecondTileOnSide(clickedTile))
     ) {
       // Scenario of 2 consequent tiles: set the states and...
       this.#elemTargetTile = clickedTile;
       this.#elemTargetTile.setTarget();
       // ... start match evaluation
 
-      return true;
+      return x;
     }
 
     if (!this.#elemPickedTile) {
@@ -240,36 +291,46 @@ export class GameArena {
       this.#elemPickedTile = clickedTile;
       this.#elemPickedTile.setPicked();
 
-      return false;
+      return undefined;
     }
 
     if (
       this.#elemPickedTile &&
-      (this.#elemTargetTile || !this.#isSecondTileOnSide(clickedTile))
+      (this.#elemTargetTile || !(x = this.#isSecondTileOnSide(clickedTile)))
     ) {
       // Wrong 2nd tile clicked OR both already clicked: reset states and set new picked immediately.
-      this.#elemPickedTile.unSetPicked();
-      this.#elemTargetTile?.unSetTarget();
+      this.#resetUserSelection();
       this.#elemPickedTile = clickedTile;
       this.#elemPickedTile.setPicked();
-      this.#elemTargetTile = null;
 
-      return false;
+      return x;
     }
 
-    return false;
+    return undefined;
+  }
+
+  #resetUserSelection() {
+    this.#elemPickedTile?.unSetPicked().unSetTarget();
+    this.#elemTargetTile?.unSetPicked().unSetTarget();
+    this.#elemPickedTile = this.#elemTargetTile = null;
   }
 
   /**
    * @param  {GameTile} target
    */
-  #isSecondTileOnSide({ id: tId }) {
-    switch (Math.abs(this.#elemPickedTile.id - tId)) {
+  #isSecondTileOnSide(target) {
+    const x = this.#elemTiles.indexOf(target);
+    const y = this.#elemTiles.indexOf(this.#elemPickedTile);
+
+    switch (x - y) {
+      case -1:
+        return "left";
+      case -this.#cols:
+        return "up";
+      case +this.#cols:
+        return "down";
       case 1:
-      case this.#cols:
-        return true;
-      default:
-        return false;
+        return "right";
     }
   }
 }
