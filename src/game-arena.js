@@ -142,7 +142,7 @@ export class GameArena {
       this.#resetUserSelection();
     }
 
-    // TODO: ensure, that after successful selection selection will be reset!
+    // TODO: ensure, that after successful it selection will be reset!
     // At least keep an eye on this nuance!
   }
 
@@ -269,7 +269,7 @@ export class GameArena {
 
   *#gatherSeekToDown(pickedTileType, seekIndex) {
     while (!this.#detectEdgeDown(seekIndex)) {
-      const testTile = this.#elemTiles[(seekIndex += this.#rows)]; // step up!
+      const testTile = this.#elemTiles[(seekIndex += this.#rows)]; // step down!
 
       if (testTile.type !== pickedTileType) {
         return;
