@@ -10,6 +10,38 @@ body {
   background-size: cover;
 }
 
+header {
+  width: 100%;
+  position: relative;
+  margin-bottom: 50px;
+}
+
+#counter {
+  height: 40px;
+  width: 120px;
+  border-radius: 20px;
+  background-color: rgb(73 5 210);
+  margin-top: 20px;
+  color: white;
+  text-align: center;
+  line-height: 40px;
+  position: absolute;
+  left: 230px;
+}
+
+#clock {
+  background-color: rgb(73 5 210);
+  height: 40px;
+  width: 120px;
+  border-radius: 20px;
+  margin-top: 20px;
+  color: white;
+  text-align: center;
+  line-height: 40px;
+  position: absolute;
+  right: 230px;
+}
+
 #view-game-arena {
   display: grid;
   justify-items: center;
@@ -29,7 +61,6 @@ body {
   grid-template-columns: repeat(3, 40px);
   grid-auto-flow: row;
   gap: 1rem;
-
 }
 
 #game-canvas > div {
@@ -44,7 +75,7 @@ body {
   grid-area: aside;
 }
 
-#view-game-arena header  {
+#view-game-arena header {
   grid-area: header;
   display: inline-flex;
   justify-content: center;
