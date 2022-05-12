@@ -60,8 +60,8 @@ export class GameArena {
 
   #resetCanvas() {
     this.#resetCanvasLayout();
-    this.#elemTiles = this.#createBoard();
-    this.#elemCanvas.replaceChildren(...this.#elemTiles);
+    this.#elemCanvas.replaceChildren(...this.#createBoard());
+    this.#elemTiles = this.#elemCanvas.children;
   }
 
   #resetCanvasLayout() {
