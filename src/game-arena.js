@@ -14,6 +14,9 @@ export class GameArena {
   /** @type number */
   #timerInterval;
 
+  /** @type number */
+  #badSwapTimeout;
+
   /** @type HTMLElement */
   #elemCanvas;
 
@@ -30,10 +33,12 @@ export class GameArena {
     canvasId = "canvasId",
     rows = 7,
     cols = 7,
+    badSwapTimeout = 500,
     timerInterval = 200,
   }) {
     this.#canvasId = canvasId;
     this.#timerInterval = timerInterval;
+    this.#badSwapTimeout = badSwapTimeout;
 
     this.#rows = rows;
     this.#cols = cols;
@@ -126,12 +131,23 @@ export class GameArena {
 
     this.#swapSelectedTiles(intendedSwapDirection);
 
-    // setInterval(() => this.#swapSelectedTiles(intendedSwapDirection), 2000);
-
     const fullMatch = this.#detectMatchXY();
     console.debug(fullMatch);
 
-    this.#resetUserSelection();
+    if (!fullMatch) {
+      this.#handleUserBadSelection();
+    }
+
+    // TODO: ensure, that after successful selection selection will be reset!
+    // this.#resetUserSelection();
+  }
+
+  #handleUserBadSelection() {
+    const id = setTimeout(() => {
+      this.#swapSelectedTiles();
+      this.#resetUserSelection();
+      clearTimeout(id);
+    }, this.#badSwapTimeout);
   }
 
   /**
