@@ -1,5 +1,6 @@
 import { GameTile } from "./game-tile.js";
 import { rangeGenerator } from "./utilities.js";
+import { MatchInfo } from "./match-info.js";
 
 export class GameArena {
   /** @typ string */
@@ -131,10 +132,10 @@ export class GameArena {
 
     this.#swapSelectedTiles(intendedSwapDirection);
 
-    const fullMatch = this.#detectMatchXY();
-    console.debug(fullMatch);
+    const matchInfo = this.#detectMatchXY();
+    console.debug(matchInfo);
 
-    if (!fullMatch) {
+    if (!matchInfo) {
       this.#handleUserBadSelection();
     }
 
@@ -204,7 +205,7 @@ export class GameArena {
         : null;
 
     return matchX?.length >= 3 || matchY?.length >= 3
-      ? { matchX, matchY }
+      ? new MatchInfo(matchX, matchY)
       : null;
   }
 
