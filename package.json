@@ -22,7 +22,7 @@
     "lint-script": "eslint . --ext .ts,.tsx,.jsx,.cjs,.mjs,.js,.vue,.json,.htm,.html --ignore-path .gitignore",
     "lint-style": "stylelint '/*.{css,scss,sass,vue}'",
     "lint-script-fix": "eslint . --ext .ts,.tsx,.jsx,.cjs,.mjs,.js,.vue,.json,.htm,.html --ignore-path .gitignore --fix",
-    "lint-style-fix": "stylelint .//*.{css,scss,sass,vue} --fix",
+    "lint-style-fix": "stylelint ./**.{css,scss,sass,vue} --fix",
     "format": "prettier . --ignore-unknown --ignore-path .gitignore --check --write && npm run lint-script-fix && npm run lint-style-fix"
   }
 }
