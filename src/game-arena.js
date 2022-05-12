@@ -17,7 +17,7 @@ export class GameArena {
   /** @type HTMLElement */
   #elemCanvas;
 
-  /** @type GameTile[] */
+  /** @type HTMLCollection */
   #elemTiles;
   /** @type GameTile */
   #elemPickedTile;
