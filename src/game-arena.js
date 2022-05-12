@@ -127,6 +127,34 @@ export class GameArena {
     }
   }
 
+  /**
+   * Performs tile swapping in DOM. Uses fields `#elemPickedTile` and
+   * `#elemTargetTile` to determine swap positions.
+   * @param  {string} direction `left` | `up` | `right` | `down`
+   */
+  #swapSelectedTiles(direction) {
+    // TODO, set up timer, to swap back, if no mach found.
+
+    const idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
+    const idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
+
+    if (!idxPicked || !idxTarget) {
+      throw new Error(
+        "Tile swapping failed: at least one of the subjected tiles is not selected."
+      );
+    }
+
+    console.debug("before swapping: ", idxPicked, idxTarget);
+
+    // Put picked tile to target tile's place; remove target tile...
+    const orphan = this.#elemCanvas.replaceChild(
+      this.#elemPickedTile,
+      this.#elemTargetTile
+    );
+    // ...and put temporarily orphaned target tile to picked tiles place.
+    this.#elemCanvas.insertBefore(orphan, this.#elemTiles.item(idxPicked));
+  }
+
   #detectMatchXY() {
     const pickedTileType = this.#elemPickedTile.type;
     // TODO: WARN: need to pay attention to index selection, if tile-swap has been done already!
