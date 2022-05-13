@@ -50,15 +50,15 @@ export class GameTile extends HTMLDivElement {
   }
 
   get isPicked() {
-    return this.className === "picked";
+    return this.classList.contains("picked");
   }
 
   get isTarget() {
-    return this.className === "target";
+    return this.classList.contains("target");
   }
 
   get isHidden() {
-    return this.className === "hidden";
+    return this.classList.contains("hidden");
   }
 
   setPicked() {
