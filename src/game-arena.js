@@ -67,29 +67,10 @@ export class GameArena {
     this.#elemCanvas.style.gridTemplateColumns = newValue;
   }
 
-  #createBoard() {
-    const resultCells = [];
-
-    // const resultCells = [];
-    // resultCells.push(this.#createTile(this.#getRandomTileKey(), 1));
-    // let toAvoid = undefined;
+  *#createBoard() {
     for (const k of rangeGenerator(this.#rows * this.#cols, 1)) {
-      // let randomTileKey = this.#getRandomTileKey();
-
-      // const prevTileType = resultCells[k - 1].dataset.tileType;
-
-      // if (randomTileKey == prevTileType) {
-      //   toAvoid = randomTileKey;
-
-      //   do {
-      //     randomTileKey = this.#getRandomTileKey();
-      //   } while (toAvoid === randomTileKey);
-      //   toAvoid = undefined;
-      // }
-      resultCells.push(this.#createTile(this.#getRandomTileKey(), k));
+      yield this.#createTile(this.#getRandomTileKey(), k);
     }
-
-    return resultCells;
   }
 
   #getRandomTileKey() {
