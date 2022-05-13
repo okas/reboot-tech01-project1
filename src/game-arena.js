@@ -159,12 +159,12 @@ export class GameArena {
     const mInfo = this.#obtainDirectionalMatchInfo();
 
     const matchX =
-      mInfo.left.length >= 1 || mInfo.right.length >= 1
+      mInfo.left?.length >= 1 || mInfo.right?.length >= 1
         ? [...mInfo.left, this.#elemPickedTile, ...mInfo.right]
         : null;
 
     const matchY =
-      mInfo.up.length >= 1 || mInfo.down.length >= 1
+      mInfo.up?.length >= 1 || mInfo.down?.length >= 1
         ? [...mInfo.up, this.#elemPickedTile, ...mInfo.down]
         : null;
 
