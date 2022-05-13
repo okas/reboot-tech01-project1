@@ -3,32 +3,33 @@ import { rangeGenerator } from "./utilities.js";
 import { MatchInfo } from "./match-info.js";
 
 export class GameArena {
-  /** @typ string */
+  /** @type {string} */
   #canvasId;
-  /** @type number */
+  /** @type {number} */
   #rows;
-  /** @type number */
+  /** @type {number} */
   #cols;
 
-  /** @type number */
+  /** @type {number} */
   #timerId;
-  /** @type number */
+  /** @type {number} */
   #timerInterval;
 
-  /** @type number */
+  /** @type {number} */
   #badSwapTimeout;
 
-  /** @type HTMLElement */
+  /** @type {HTMLElement} */
   #elemCanvas;
 
-  /** @type HTMLCollection */
+  /** @type {HTMLCollection} */
   #elemTiles;
-  /** @type GameTile */
+  /** @type {GameTile} */
   #elemPickedTile;
-  /** @type GameTile */
+  /** @type {GameTile} */
   #elemTargetTile;
 
-  #tileTypeToClassMap;
+  /** @type {Map<string, function[]>} */
+  #matchSeekHelpersMap;
 
   constructor({
     canvasId = "canvasId",
@@ -45,19 +46,10 @@ export class GameArena {
     this.#cols = cols;
     this.#timerId = null;
 
-    this.#tileTypeToClassMap = new Map([
-      [1, "type-1"],
-      [2, "type-2"],
-      [3, "type-3"],
-      [4, "type-4"],
-      [5, "type-5"],
-      [6, "type-6"],
-      [7, "type-7"],
-    ]);
-
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
+    this.#setupMatchDirectionalActions();
   }
 
   #initDOM() {
@@ -79,44 +71,21 @@ export class GameArena {
     this.#elemCanvas.style.gridTemplateColumns = newValue;
   }
 
-  #createBoard() {
-    const resultCells = [];
-
-    // const resultCells = [];
-    // resultCells.push(this.#createTile(this.#getRandomTileKey(), 1));
-    // let toAvoid = undefined;
+  *#createBoard() {
     for (const k of rangeGenerator(this.#rows * this.#cols, 1)) {
-      // let randomTileKey = this.#getRandomTileKey();
-
-      // const prevTileType = resultCells[k - 1].dataset.tileType;
-
-      // if (randomTileKey == prevTileType) {
-      //   toAvoid = randomTileKey;
-
-      //   do {
-      //     randomTileKey = this.#getRandomTileKey();
-      //   } while (toAvoid === randomTileKey);
-      //   toAvoid = undefined;
-      // }
-      resultCells.push(this.#createTile(this.#getRandomTileKey(), k));
+      yield this.#createTile(this.#getRandomTileKey(), k);
     }
-
-    return resultCells;
   }
 
   #getRandomTileKey() {
-    return Math.ceil(Math.random() * this.#tileTypeToClassMap.size);
+    return Math.ceil(Math.random() * GameTile.typeCount);
   }
 
   #createTile(tileKey, id) {
-    const type = this.#tileTypeToClassMap.get(tileKey);
+    const tile = new GameTile({ id, type: tileKey, worth: 1, leverage: 1.25 });
+    tile.onclick = this.#tileClickHandler.bind(this);
 
-    const cell = new GameTile({ type, worth: 1, leverage: 1.25 });
-    cell.id = id;
-    cell.dataset.tileType = tileKey;
-    cell.onclick = this.#tileClickHandler.bind(this);
-
-    return cell;
+    return tile;
   }
 
   /**
@@ -130,26 +99,74 @@ export class GameArena {
       return;
     }
 
-    this.#swapSelectedTiles(intendedSwapDirection);
+    this.#swapUserSelectedTiles();
 
     const matchInfo = this.#detectMatchXY();
     console.debug(matchInfo);
 
-    if (!matchInfo) {
-      this.#handleUserBadSelection();
+    if (matchInfo) {
+      this.#handleUserSuccessSelection(matchInfo);
     } else {
-      this.#hideMatch(matchInfo);
-      this.#resetUserSelection();
+      this.#handleUserBadSelection();
     }
 
-    // TODO: ensure, that after successful selection selection will be reset!
+    // TODO: ensure, that after successful it selection will be reset!
     // At least keep an eye on this nuance!
+  }
+
+  /**
+   * @param {MatchInfo} matchInfo
+   */
+  #handleUserSuccessSelection(matchInfo) {
+    this.#resetUserSelection();
+    this.#hideMatch(matchInfo);
+    this.#bubbleMatchToTopEdge(matchInfo);
+  }
+
+  /**
+   * @param {MatchInfo} matchFixture
+   */
+  #bubbleMatchToTopEdge(matchFixture) {
+    // TODO: this is on possibility to drive how bubbling takes place
+    // TODO: and feed the animation.
+
+    // Copy, because bubbling track will be tracked by removing tiles,
+    // that are reached it's destination.
+    const fixtureRaw = new Set(matchFixture.all);
+
+    while (fixtureRaw.size) {
+      fixtureRaw.forEach((tileBubbling) => {
+        // TODO: duplicate find of index; swapping does the same!
+        const idxMatchTile = this.#elemTiles.indexOf(tileBubbling);
+
+        const tileFalling = this.#tryGetFallingTile(idxMatchTile);
+
+        if (tileFalling) {
+          this.#swapTiles(tileBubbling, tileFalling);
+        } else {
+          fixtureRaw.delete(tileBubbling);
+        }
+      });
+    }
+  }
+
+  /**
+   * @param {number} indexMatchedTile
+   */
+  #tryGetFallingTile(indexMatchedTile) {
+    if (this.#detectEdgeUp(indexMatchedTile)) {
+      return null;
+    }
+    /** @type {GameTile} */
+    const tile = this.#elemTiles.item(this.#indexToUp(indexMatchedTile));
+
+    return tile.isHidden ? null : tile;
   }
 
   #handleUserBadSelection() {
     const id = setTimeout(() => {
       clearTimeout(id);
-      this.#swapSelectedTiles();
+      this.#swapUserSelectedTiles();
       this.#resetUserSelection();
     }, this.#badSwapTimeout);
   }
@@ -161,43 +178,32 @@ export class GameArena {
     matchInfo.all.forEach((tile) => tile.setHidden());
   }
 
-  /**
-   * Performs tile swapping in DOM. Uses fields `#elemPickedTile` and
-   * `#elemTargetTile` to determine swap positions.
-   * @param  {string} direction `left` | `up` | `right` | `down`
-   */
-  #swapSelectedTiles(direction) {
-    // TODO, set up timer, to swap back, if no mach found.
-
-    let idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
-    let idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
-
-    if (!idxPicked || !idxTarget) {
+  #swapUserSelectedTiles() {
+    if (!this.#elemPickedTile || !this.#elemTargetTile) {
       throw new Error(
-        "Tile swapping failed: at least one of the subjected tiles is not selected."
+        "Developer error: tile swapping failed: at least one of the subjected tiles is not set."
       );
     }
 
-    console.debug(
-      "Selected indices **before** swapping: ",
-      idxPicked,
-      idxTarget
-    );
+    this.#swapTiles(this.#elemPickedTile, this.#elemTargetTile);
+  }
 
-    // Put picked tile to target tile's place; remove target tile...
-    const orphan = this.#elemCanvas.replaceChild(
-      this.#elemPickedTile,
-      this.#elemTargetTile
-    );
-    // ...and put temporarily orphaned target tile to picked tiles place.
-    this.#elemCanvas.insertBefore(orphan, this.#elemTiles.item(idxPicked));
+  /**
+   * Swap provided tiles in DOM.
+   * @param {GameTile} tile1
+   * @param {GameTile} tile2
+   */
+  #swapTiles(tile1, tile2) {
+    const idxInitialTile1 = this.#elemTiles.indexOf(tile1);
 
-    idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
-    idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
-    console.debug(
-      "Selected indices **after** swapping: ",
-      idxPicked,
-      idxTarget
+    // TODO: comments!
+    // Put 1st tile to 2nd tile's place; remove 2nd tile from DOM...
+    const orphan = this.#elemCanvas.replaceChild(tile1, tile2);
+
+    // ...and put temporarily orphaned 2nd tile to 1st tile's initial place.
+    this.#elemCanvas.insertBefore(
+      orphan,
+      this.#elemTiles.item(idxInitialTile1)
     );
   }
 
@@ -205,12 +211,12 @@ export class GameArena {
     const mInfo = this.#obtainDirectionalMatchInfo();
 
     const matchX =
-      mInfo.left.length >= 1 || mInfo.right.length >= 1
+      mInfo.left?.length >= 1 || mInfo.right?.length >= 1
         ? [...mInfo.left, this.#elemPickedTile, ...mInfo.right]
         : null;
 
     const matchY =
-      mInfo.up.length >= 1 || mInfo.down.length >= 1
+      mInfo.up?.length >= 1 || mInfo.down?.length >= 1
         ? [...mInfo.up, this.#elemPickedTile, ...mInfo.down]
         : null;
 
@@ -223,60 +229,70 @@ export class GameArena {
     const pickedTileType = this.#elemPickedTile.type;
     const idxSeek = this.#elemTiles.indexOf(this.#elemPickedTile);
 
-    return {
-      left: [...this.#gatherSeekToLeft(pickedTileType, idxSeek)],
-      right: [...this.#gatherSeekToRight(pickedTileType, idxSeek)],
-      up: [...this.#gatherSeekToUp(pickedTileType, idxSeek)],
-      down: [...this.#gatherSeekToDown(pickedTileType, idxSeek)],
-    };
+    return ["left", "up", "right", "down"].reduce((acc, dir) => {
+      acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
+      return acc;
+    }, {});
   }
 
-  *#gatherSeekToLeft(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeLeft(seekIndex)) {
-      const testTile = this.#elemTiles[--seekIndex]; // step left!
+  #setupMatchDirectionalActions() {
+    this.#matchSeekHelpersMap = new Map([
+      ["left", [this.#detectEdgeLeft.bind(this), this.#indexToLeft.bind(this)]],
+      ["up", [this.#detectEdgeUp.bind(this), this.#indexToUp.bind(this)]],
+      [
+        "right",
+        [this.#detectEdgeRight.bind(this), this.#indexToRight.bind(this)],
+      ],
+      ["down", [this.#detectEdgeDown.bind(this), this.#indexToDown.bind(this)]],
+    ]);
+  }
 
-      if (testTile.type !== pickedTileType) {
+  /**
+   * @param {string} direction `left` | `up` |`right` |`down`
+   * @param {number} pickedTileType
+   * @param {number} seekIndex
+   */
+  *#seekInDirection(direction, pickedTileType, seekIndex) {
+    const [edgeDetectFn, getDirectionIndexFn] =
+      this.#matchSeekHelpersMap.get(direction);
+
+    while (!edgeDetectFn(seekIndex)) {
+      seekIndex = getDirectionIndexFn(seekIndex);
+
+      /** @type {GameTile} */
+      const testTile = this.#elemTiles[seekIndex]; // step left!
+
+      if (this.#isInMatch(testTile, pickedTileType)) {
+        yield testTile;
+      } else {
         return;
       }
-
-      yield testTile;
     }
   }
 
-  *#gatherSeekToUp(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeUp(seekIndex)) {
-      const testTile = this.#elemTiles[(seekIndex -= this.#rows)]; // step up!
-
-      if (testTile.type !== pickedTileType) {
-        return;
-      }
-
-      yield testTile;
-    }
+  /**
+   * Validates whether seeked element can be included in match.
+   * @param {GameTile} testTile
+   * @param {number} pickedTileType
+   */
+  #isInMatch({ isHidden, type }, pickedTileType) {
+    return !isHidden && type === pickedTileType;
   }
 
-  *#gatherSeekToRight(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeRight(seekIndex)) {
-      const testTile = this.#elemTiles[++seekIndex]; // step right!
-
-      if (testTile.type !== pickedTileType) {
-        return;
-      }
-
-      yield testTile;
-    }
+  #indexToLeft(indexReference) {
+    return --indexReference;
   }
 
-  *#gatherSeekToDown(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeDown(seekIndex)) {
-      const testTile = this.#elemTiles[(seekIndex += this.#rows)]; // step up!
+  #indexToUp(indexReference) {
+    return indexReference - this.#rows;
+  }
 
-      if (testTile.type !== pickedTileType) {
-        return;
-      }
+  #indexToRight(indexReference) {
+    return ++indexReference;
+  }
 
-      yield testTile;
-    }
+  #indexToDown(indexReference) {
+    return indexReference + this.#rows;
   }
 
   #detectEdgeLeft(seekIndex) {
