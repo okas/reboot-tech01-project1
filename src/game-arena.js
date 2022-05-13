@@ -3,29 +3,29 @@ import { rangeGenerator } from "./utilities.js";
 import { MatchInfo } from "./match-info.js";
 
 export class GameArena {
-  /** @typ string */
+  /** @type {string} */
   #canvasId;
-  /** @type number */
+  /** @type {number} */
   #rows;
-  /** @type number */
+  /** @type {number} */
   #cols;
 
-  /** @type number */
+  /** @type {number} */
   #timerId;
-  /** @type number */
+  /** @type {number} */
   #timerInterval;
 
-  /** @type number */
+  /** @type {number} */
   #badSwapTimeout;
 
-  /** @type HTMLElement */
+  /** @type {HTMLElement} */
   #elemCanvas;
 
-  /** @type HTMLCollection */
+  /** @type {HTMLCollection} */
   #elemTiles;
-  /** @type GameTile */
+  /** @type {GameTile} */
   #elemPickedTile;
-  /** @type GameTile */
+  /** @type {GameTile} */
   #elemTargetTile;
 
   constructor({

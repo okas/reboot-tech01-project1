@@ -4,8 +4,8 @@ export class MatchInfo {
   #all;
 
   /**
-   * @param  {GameTile[]|null} arrX
-   * @param  {GameTile[]|null} arrY
+   * @param {GameTile[]|null} arrX
+   * @param {GameTile[]|null} arrY
    */
   constructor(arrX, arrY) {
     this.arrX = arrX;
@@ -13,7 +13,7 @@ export class MatchInfo {
   }
 
   /**
-   * @type Set<GameTile>
+   * @type {Set<GameTile>}
    */
   get all() {
     return (this.#all ??= this.#toSet());
