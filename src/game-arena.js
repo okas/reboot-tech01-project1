@@ -130,7 +130,7 @@ export class GameArena {
       return;
     }
 
-    this.#swapSelectedTiles(intendedSwapDirection);
+    this.#swapUserSelectedTiles();
 
     const matchInfo = this.#detectMatchXY();
     console.debug(matchInfo);
@@ -149,7 +149,7 @@ export class GameArena {
   #handleUserBadSelection() {
     const id = setTimeout(() => {
       clearTimeout(id);
-      this.#swapSelectedTiles();
+      this.#swapUserSelectedTiles();
       this.#resetUserSelection();
     }, this.#badSwapTimeout);
   }
@@ -161,43 +161,32 @@ export class GameArena {
     matchInfo.all.forEach((tile) => tile.setHidden());
   }
 
-  /**
-   * Performs tile swapping in DOM. Uses fields `#elemPickedTile` and
-   * `#elemTargetTile` to determine swap positions.
-   * @param  {string} direction `left` | `up` | `right` | `down`
-   */
-  #swapSelectedTiles(direction) {
-    // TODO, set up timer, to swap back, if no mach found.
-
-    let idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
-    let idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
-
-    if (!idxPicked || !idxTarget) {
+  #swapUserSelectedTiles() {
+    if (!this.#elemPickedTile || !this.#elemTargetTile) {
       throw new Error(
-        "Tile swapping failed: at least one of the subjected tiles is not selected."
+        "Developer error: tile swapping failed: at least one of the subjected tiles is not set."
       );
     }
 
-    console.debug(
-      "Selected indices **before** swapping: ",
-      idxPicked,
-      idxTarget
-    );
+    this.#swapTiles(this.#elemPickedTile, this.#elemTargetTile);
+  }
 
-    // Put picked tile to target tile's place; remove target tile...
-    const orphan = this.#elemCanvas.replaceChild(
-      this.#elemPickedTile,
-      this.#elemTargetTile
-    );
-    // ...and put temporarily orphaned target tile to picked tiles place.
-    this.#elemCanvas.insertBefore(orphan, this.#elemTiles.item(idxPicked));
+  /**
+   * Swap provided tiles in DOM.
+   * @param {GameTile} tile1
+   * @param {GameTile} tile2
+   */
+  #swapTiles(tile1, tile2) {
+    const idxInitialTile1 = this.#elemTiles.indexOf(tile1);
 
-    idxPicked = this.#elemTiles.indexOf(this.#elemPickedTile);
-    idxTarget = this.#elemTiles.indexOf(this.#elemTargetTile);
-    console.debug(
-      "Selected indices **after** swapping: ",
-      idxPicked,
-      idxTarget
+    // TODO: comments!
+    // Put 1st tile to 2nd tile's place; remove 2nd tile from DOM...
+    const orphan = this.#elemCanvas.replaceChild(tile1, tile2);
+
+    // ...and put temporarily orphaned 2nd tile to 1st tile's initial place.
+    this.#elemCanvas.insertBefore(
+      orphan,
+      this.#elemTiles.item(idxInitialTile1)
     );
   }
 
