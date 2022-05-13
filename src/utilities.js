@@ -3,7 +3,6 @@
  * @param {number} end
  * @param {number=} start
  * @param {number=} step
- * @returns {() => Generator)} Iterator function
  * @see https://www.30secondsofcode.org/articles/s/javascript-range-generator
  */
 export function rangeGenerator(end, start = 0, step = 1) {
