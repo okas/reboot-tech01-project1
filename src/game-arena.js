@@ -28,6 +28,9 @@ export class GameArena {
   /** @type {GameTile} */
   #elemTargetTile;
 
+  /** @type {Map<string, function[]>} */
+  #matchSeekHelpersMap;
+
   constructor({
     canvasId = "canvasId",
     rows = 7,
@@ -46,6 +49,7 @@ export class GameArena {
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
+    this.#setupMatchDirectionalActions();
   }
 
   #initDOM() {
@@ -177,60 +181,70 @@ export class GameArena {
     const pickedTileType = this.#elemPickedTile.type;
     const idxSeek = this.#elemTiles.indexOf(this.#elemPickedTile);
 
-    return {
-      left: [...this.#gatherSeekToLeft(pickedTileType, idxSeek)],
-      right: [...this.#gatherSeekToRight(pickedTileType, idxSeek)],
-      up: [...this.#gatherSeekToUp(pickedTileType, idxSeek)],
-      down: [...this.#gatherSeekToDown(pickedTileType, idxSeek)],
-    };
+    return ["left", "up", "right", "down"].reduce((acc, dir) => {
+      acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
+      return acc;
+    }, {});
   }
 
-  *#gatherSeekToLeft(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeLeft(seekIndex)) {
-      const testTile = this.#elemTiles[--seekIndex]; // step left!
+  #setupMatchDirectionalActions() {
+    this.#matchSeekHelpersMap = new Map([
+      ["left", [this.#detectEdgeLeft.bind(this), this.#indexToLeft.bind(this)]],
+      ["up", [this.#detectEdgeUp.bind(this), this.#indexToUp.bind(this)]],
+      [
+        "right",
+        [this.#detectEdgeRight.bind(this), this.#indexToRight.bind(this)],
+      ],
+      ["down", [this.#detectEdgeDown.bind(this), this.#indexToDown.bind(this)]],
+    ]);
+  }
 
-      if (testTile.type !== pickedTileType) {
+  /**
+   * @param {string} direction `left` | `up` |`right` |`down`
+   * @param {number} pickedTileType
+   * @param {number} seekIndex
+   */
+  *#seekInDirection(direction, pickedTileType, seekIndex) {
+    const [edgeDetectFn, getDirectionIndexFn] =
+      this.#matchSeekHelpersMap.get(direction);
+
+    while (!edgeDetectFn(seekIndex)) {
+      seekIndex = getDirectionIndexFn(seekIndex);
+
+      /** @type {GameTile} */
+      const testTile = this.#elemTiles[seekIndex]; // step left!
+
+      if (this.#isInMatch(testTile, pickedTileType)) {
+        yield testTile;
+      } else {
         return;
       }
-
-      yield testTile;
     }
   }
 
-  *#gatherSeekToUp(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeUp(seekIndex)) {
-      const testTile = this.#elemTiles[(seekIndex -= this.#rows)]; // step up!
-
-      if (testTile.type !== pickedTileType) {
-        return;
-      }
-
-      yield testTile;
-    }
+  /**
+   * Validates whether seeked element can be included in match.
+   * @param {GameTile} testTile
+   * @param {number} pickedTileType
+   */
+  #isInMatch({ isHidden, type }, pickedTileType) {
+    return !isHidden && type === pickedTileType;
   }
 
-  *#gatherSeekToRight(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeRight(seekIndex)) {
-      const testTile = this.#elemTiles[++seekIndex]; // step right!
-
-      if (testTile.type !== pickedTileType) {
-        return;
-      }
-
-      yield testTile;
-    }
+  #indexToLeft(indexReference) {
+    return --indexReference;
   }
 
-  *#gatherSeekToDown(pickedTileType, seekIndex) {
-    while (!this.#detectEdgeDown(seekIndex)) {
-      const testTile = this.#elemTiles[(seekIndex += this.#rows)]; // step down!
+  #indexToUp(indexReference) {
+    return indexReference - this.#rows;
+  }
 
-      if (testTile.type !== pickedTileType) {
-        return;
-      }
+  #indexToRight(indexReference) {
+    return ++indexReference;
+  }
 
-      yield testTile;
-    }
+  #indexToDown(indexReference) {
+    return indexReference + this.#rows;
   }
 
   #detectEdgeLeft(seekIndex) {
