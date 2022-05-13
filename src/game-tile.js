@@ -1,6 +1,6 @@
 /**
  * @typedef {Object} Config
- * @property {string} type
+ * @property {number} type
  * @property {number} worth
  * @property {number} leverage
  */
@@ -10,15 +10,31 @@ export class GameTile extends HTMLDivElement {
   #worth;
   #leverage;
 
+  static #tileClassMap = new Map([
+    [1, "type-1"],
+    [2, "type-2"],
+    [3, "type-3"],
+    [4, "type-4"],
+    [5, "type-5"],
+    [6, "type-6"],
+    [7, "type-7"],
+  ]);
+
+  static get typeCount() {
+    return GameTile.#tileClassMap.size;
+  }
+
   /**
    * @param {Config}
    */
-  constructor({ type, worth, leverage }) {
+  constructor({ id, type, worth, leverage }) {
     super();
 
+    this.id = id;
     this.#type = type;
     this.#worth = worth;
     this.#leverage = leverage;
+    this.dataset.tileType = type;
   }
 
   get type() {
@@ -76,7 +92,7 @@ export class GameTile extends HTMLDivElement {
   }
 
   connectedCallback() {
-    this.classList.add(this.#type);
+    this.classList.add(GameTile.#tileClassMap.get(this.#type));
   }
 }
 

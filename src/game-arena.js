@@ -28,8 +28,6 @@ export class GameArena {
   /** @type GameTile */
   #elemTargetTile;
 
-  #tileTypeToClassMap;
-
   constructor({
     canvasId = "canvasId",
     rows = 7,
@@ -44,16 +42,6 @@ export class GameArena {
     this.#rows = rows;
     this.#cols = cols;
     this.#timerId = null;
-
-    this.#tileTypeToClassMap = new Map([
-      [1, "type-1"],
-      [2, "type-2"],
-      [3, "type-3"],
-      [4, "type-4"],
-      [5, "type-5"],
-      [6, "type-6"],
-      [7, "type-7"],
-    ]);
 
     this.#initDOM();
     this.#resetCanvas();
@@ -105,18 +93,14 @@ export class GameArena {
   }
 
   #getRandomTileKey() {
-    return Math.ceil(Math.random() * this.#tileTypeToClassMap.size);
+    return Math.ceil(Math.random() * GameTile.typeCount);
   }
 
   #createTile(tileKey, id) {
-    const type = this.#tileTypeToClassMap.get(tileKey);
+    const tile = new GameTile({ id, type: tileKey, worth: 1, leverage: 1.25 });
+    tile.onclick = this.#tileClickHandler.bind(this);
 
-    const cell = new GameTile({ type, worth: 1, leverage: 1.25 });
-    cell.id = id;
-    cell.dataset.tileType = tileKey;
-    cell.onclick = this.#tileClickHandler.bind(this);
-
-    return cell;
+    return tile;
   }
 
   /**
