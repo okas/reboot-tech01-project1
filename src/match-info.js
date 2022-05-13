@@ -13,9 +13,13 @@ export class MatchInfo {
   }
 
   /**
-   * @type GameTile[]
+   * @type Set<GameTile>
    */
   get all() {
-    return (this.#all ??= [...(this.arrX ?? []), ...(this.arrY ?? [])]);
+    return (this.#all ??= this.#toSet());
+  }
+
+  #toSet() {
+    return new Set([...(this.arrX ?? []), ...(this.arrY ?? [])]);
   }
 }
