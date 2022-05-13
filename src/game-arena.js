@@ -104,15 +104,63 @@ export class GameArena {
     const matchInfo = this.#detectMatchXY();
     console.debug(matchInfo);
 
-    if (!matchInfo) {
-      this.#handleUserBadSelection();
+    if (matchInfo) {
+      this.#handleUserSuccessSelection(matchInfo);
     } else {
-      this.#hideMatch(matchInfo);
-      this.#resetUserSelection();
+      this.#handleUserBadSelection();
     }
 
     // TODO: ensure, that after successful it selection will be reset!
     // At least keep an eye on this nuance!
+  }
+
+  /**
+   * @param {MatchInfo} matchInfo
+   */
+  #handleUserSuccessSelection(matchInfo) {
+    this.#resetUserSelection();
+    this.#hideMatch(matchInfo);
+    this.#bubbleMatchToTopEdge(matchInfo);
+  }
+
+  /**
+   * @param {MatchInfo} matchFixture
+   */
+  #bubbleMatchToTopEdge(matchFixture) {
+    // TODO: this is on possibility to drive how bubbling takes place
+    // TODO: and feed the animation.
+
+    // Copy, because bubbling track will be tracked by removing tiles,
+    // that are reached it's destination.
+    const fixtureRaw = new Set(matchFixture.all);
+
+    while (fixtureRaw.size) {
+      fixtureRaw.forEach((tileBubbling) => {
+        // TODO: duplicate find of index; swapping does the same!
+        const idxMatchTile = this.#elemTiles.indexOf(tileBubbling);
+
+        const tileFalling = this.#tryGetFallingTile(idxMatchTile);
+
+        if (tileFalling) {
+          this.#swapTiles(tileBubbling, tileFalling);
+        } else {
+          fixtureRaw.delete(tileBubbling);
+        }
+      });
+    }
+  }
+
+  /**
+   * @param {number} indexMatchedTile
+   */
+  #tryGetFallingTile(indexMatchedTile) {
+    if (this.#detectEdgeUp(indexMatchedTile)) {
+      return null;
+    }
+    /** @type {GameTile} */
+    const tile = this.#elemTiles.item(this.#indexToUp(indexMatchedTile));
+
+    return tile.isHidden ? null : tile;
   }
 
   #handleUserBadSelection() {
