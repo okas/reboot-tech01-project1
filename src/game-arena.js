@@ -158,7 +158,7 @@ export class GameArena {
       return null;
     }
     /** @type {GameTile} */
-    const tile = this.#elemTiles.item(this.#indexToUp(indexMatchedTile));
+    const tile = this.#elemTiles.item(this.#getIndexToUp(indexMatchedTile));
 
     return tile.isHidden ? null : tile;
   }
@@ -237,13 +237,19 @@ export class GameArena {
 
   #setupMatchDirectionalActions() {
     this.#matchSeekHelpersMap = new Map([
-      ["left", [this.#detectEdgeLeft.bind(this), this.#indexToLeft.bind(this)]],
-      ["up", [this.#detectEdgeUp.bind(this), this.#indexToUp.bind(this)]],
+      [
+        "left",
+        [this.#detectEdgeLeft.bind(this), this.#getIndexToLeft.bind(this)],
+      ],
+      ["up", [this.#detectEdgeUp.bind(this), this.#getIndexToUp.bind(this)]],
       [
         "right",
-        [this.#detectEdgeRight.bind(this), this.#indexToRight.bind(this)],
+        [this.#detectEdgeRight.bind(this), this.#getIndexToRight.bind(this)],
       ],
-      ["down", [this.#detectEdgeDown.bind(this), this.#indexToDown.bind(this)]],
+      [
+        "down",
+        [this.#detectEdgeDown.bind(this), this.#getIndexToDown.bind(this)],
+      ],
     ]);
   }
 
@@ -253,15 +259,18 @@ export class GameArena {
    * @param {number} seekIndex
    */
   *#seekInDirection(direction, pickedTileType, seekIndex) {
-    const [edgeDetectFn, getDirectionIndexFn] =
+    const [edgeDetectOnDirectionFn, indexToDirectionFn] =
       this.#matchSeekHelpersMap.get(direction);
 
-    while (!edgeDetectFn(seekIndex)) {
-      seekIndex = getDirectionIndexFn(seekIndex);
+    // Detect edge on given direction, proceed, if no on the edge yet.
+    while (!edgeDetectOnDirectionFn(seekIndex)) {
+      // Move seek index to given direction.
+      seekIndex = indexToDirectionFn(seekIndex);
 
       /** @type {GameTile} */
-      const testTile = this.#elemTiles[seekIndex]; // step left!
+      const testTile = this.#elemTiles[seekIndex];
 
+      // Validate gainst match conditions.
       if (this.#isInMatch(testTile, pickedTileType)) {
         yield testTile;
       } else {
@@ -279,19 +288,19 @@ export class GameArena {
     return !isHidden && type === pickedTileType;
   }
 
-  #indexToLeft(indexReference) {
+  #getIndexToLeft(indexReference) {
     return --indexReference;
   }
 
-  #indexToUp(indexReference) {
+  #getIndexToUp(indexReference) {
     return indexReference - this.#rows;
   }
 
-  #indexToRight(indexReference) {
+  #getIndexToRight(indexReference) {
     return ++indexReference;
   }
 
-  #indexToDown(indexReference) {
+  #getIndexToDown(indexReference) {
     return indexReference + this.#rows;
   }
 
