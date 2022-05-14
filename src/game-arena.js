@@ -2,6 +2,7 @@ import { GameTile } from "./game-tile.js";
 import { rangeGenerator } from "./utilities.js";
 import { MatchInfo } from "./match-info.js";
 import { ComboMatchInfo } from "./combo-match-info.js";
+import { BoardWalker } from "./board-walker.js";
 
 export class GameArena {
   /** @type {string} */
@@ -29,7 +30,9 @@ export class GameArena {
   /** @type {GameTile} */
   #elemTargetTile;
 
-  /** @type {Map<string, function[]>} */
+  #walker;
+
+  /** @type {Map<string, [Function, Function]>} */
   #matchSeekHelpersMap;
 
   constructor({
@@ -50,6 +53,9 @@ export class GameArena {
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
+
+    this.#walker = new BoardWalker(rows, cols);
+
     this.#setupMatchDirectionalActions();
   }
 
@@ -93,16 +99,31 @@ export class GameArena {
     this.#matchSeekHelpersMap = new Map([
       [
         "left",
-        [this.#detectEdgeLeft.bind(this), this.#getIndexToLeft.bind(this)],
+        [
+          this.#walker.detectEdgeLeft.bind(this.#walker),
+          this.#walker.getIndexToLeft.bind(this.#walker),
+        ],
       ],
-      ["up", [this.#detectEdgeUp.bind(this), this.#getIndexToUp.bind(this)]],
+      [
+        "up",
+        [
+          this.#walker.detectEdgeUp.bind(this.#walker),
+          this.#walker.getIndexToUp.bind(this.#walker),
+        ],
+      ],
       [
         "right",
-        [this.#detectEdgeRight.bind(this), this.#getIndexToRight.bind(this)],
+        [
+          this.#walker.detectEdgeRight.bind(this.#walker),
+          this.#walker.getIndexToRight.bind(this.#walker),
+        ],
       ],
       [
         "down",
-        [this.#detectEdgeDown.bind(this), this.#getIndexToDown.bind(this)],
+        [
+          this.#walker.detectEdgeDown.bind(this.#walker),
+          this.#walker.getIndexToDown.bind(this.#walker),
+        ],
       ],
     ]);
   }
@@ -173,11 +194,13 @@ export class GameArena {
    * @param {number} indexMatchedTile
    */
   #tryGetFallingTile(indexMatchedTile) {
-    if (this.#detectEdgeUp(indexMatchedTile)) {
+    if (this.#walker.detectEdgeUp(indexMatchedTile)) {
       return null;
     }
     /** @type {GameTile} */
-    const tile = this.#elemTiles.item(this.#getIndexToUp(indexMatchedTile));
+    const tile = this.#elemTiles.item(
+      this.#walker.getIndexToUp(indexMatchedTile)
+    );
 
     return tile.isHidden ? null : tile;
   }
@@ -301,38 +324,6 @@ export class GameArena {
    */
   #isInMatch({ isHidden, type }, pickedTileType) {
     return !isHidden && type === pickedTileType;
-  }
-
-  #getIndexToLeft(indexReference) {
-    return --indexReference;
-  }
-
-  #getIndexToUp(indexReference) {
-    return indexReference - this.#rows;
-  }
-
-  #getIndexToRight(indexReference) {
-    return ++indexReference;
-  }
-
-  #getIndexToDown(indexReference) {
-    return indexReference + this.#rows;
-  }
-
-  #detectEdgeLeft(seekIndex) {
-    return !((seekIndex / this.#cols) % 1);
-  }
-
-  #detectEdgeUp(seekIndex) {
-    return seekIndex < this.#cols;
-  }
-
-  #detectEdgeRight(seekIndex) {
-    return !(((seekIndex + 1) / this.#cols) % 1);
-  }
-
-  #detectEdgeDown(seekIndex) {
-    return seekIndex >= this.#rows * this.#cols - this.#rows;
   }
 
   /**
