@@ -196,15 +196,15 @@ export class GameArena {
   #swapTiles(tile1, tile2) {
     const idxInitialTile1 = this.#elemTiles.indexOf(tile1);
 
-    // TODO: comments!
-    // Put 1st tile to 2nd tile's place; remove 2nd tile from DOM...
-    const orphan = this.#elemCanvas.replaceChild(tile1, tile2);
-
-    // ...and put temporarily orphaned 2nd tile to 1st tile's initial place.
-    this.#elemCanvas.insertBefore(
-      orphan,
-      this.#elemTiles.item(idxInitialTile1)
-    );
+    if (
+      tile1.compareDocumentPosition(tile2) & Node.DOCUMENT_POSITION_PRECEDING // left | up ?
+    ) {
+      tile2.after(tile1);
+      this.#elemTiles.item(idxInitialTile1).after(tile2);
+    } else {
+      tile2.before(tile1);
+      this.#elemTiles.item(idxInitialTile1).before(tile2);
+    }
   }
 
   #detectMatchXY() {
