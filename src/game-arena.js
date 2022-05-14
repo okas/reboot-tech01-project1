@@ -1,6 +1,7 @@
 import { GameTile } from "./game-tile.js";
 import { rangeGenerator } from "./utilities.js";
 import { MatchInfo } from "./match-info.js";
+import { ComboMatchInfo } from "./combo-match-info.js";
 
 export class GameArena {
   /** @type {string} */
@@ -119,11 +120,11 @@ export class GameArena {
 
     this.#swapUserSelectedTiles();
 
-    const matchInfo = this.#detectMatchXY();
-    console.debug(matchInfo);
+    const matchFixture = this.#calculateMatchByUserSelection();
+    console.debug(matchFixture);
 
-    if (matchInfo) {
-      this.#handleUserSuccessSelection(matchInfo);
+    if (matchFixture) {
+      this.#handleUserSuccessSelection(matchFixture);
     } else {
       this.#handleUserBadSelection();
     }
@@ -133,7 +134,7 @@ export class GameArena {
   }
 
   /**
-   * @param {MatchInfo} matchInfo
+   * @param {ComboMatchInfo} matchInfo
    */
   #handleUserSuccessSelection(matchInfo) {
     this.#resetUserSelection();
@@ -142,7 +143,7 @@ export class GameArena {
   }
 
   /**
-   * @param {MatchInfo} matchFixture
+   * @param {ComboMatchInfo} matchFixture
    */
   #bubbleMatchToTopEdge(matchFixture) {
     // TODO: this is on possibility to drive how bubbling takes place
@@ -150,7 +151,7 @@ export class GameArena {
 
     // Copy, because bubbling track will be tracked by removing tiles,
     // that are reached it's destination.
-    const fixtureRaw = new Set(matchFixture.all);
+    const fixtureRaw = new Set(matchFixture.domSortedTiles);
 
     while (fixtureRaw.size) {
       fixtureRaw.forEach((tileBubbling) => {
@@ -190,10 +191,10 @@ export class GameArena {
   }
 
   /**
-   * @param {MatchInfo} matchInfo
+   * @param {ComboMatchInfo} matchInfo
    */
   #hideMatch(matchInfo) {
-    matchInfo.all.forEach((tile) => tile.setHidden());
+    matchInfo.domSortedTiles.forEach((tile) => tile.setHidden());
   }
 
   #swapUserSelectedTiles() {
@@ -225,17 +226,31 @@ export class GameArena {
     }
   }
 
-  #detectMatchXY() {
-    const mInfo = this.#obtainDirectionalMatchInfo();
+  #calculateMatchByUserSelection() {
+    const matchInfo1 = this.#detectMatchXY(this.#elemPickedTile);
+    const matchInfo2 = this.#detectMatchXY(this.#elemTargetTile);
+
+    return matchInfo1 || matchInfo2
+      ? new ComboMatchInfo(matchInfo1, matchInfo2)
+      : null;
+  }
+
+  /**
+   * Conducts analysis by X and Y axes around provided tile.
+   * @param {GameTile} tileToAnalyze
+   * @returns {MatchInfo} Analyzed tile is included in every or either axe.
+   */
+  #detectMatchXY(tileToAnalyze) {
+    const mInfo = this.#obtainDirectionalMatchInfo(tileToAnalyze);
 
     const matchX =
       mInfo.left?.length >= 1 || mInfo.right?.length >= 1
-        ? [...mInfo.left, this.#elemPickedTile, ...mInfo.right]
+        ? [...mInfo.left, tileToAnalyze, ...mInfo.right]
         : null;
 
     const matchY =
       mInfo.up?.length >= 1 || mInfo.down?.length >= 1
-        ? [...mInfo.up, this.#elemPickedTile, ...mInfo.down]
+        ? [...mInfo.up, tileToAnalyze, ...mInfo.down]
         : null;
 
     return matchX?.length >= 3 || matchY?.length >= 3
@@ -243,9 +258,9 @@ export class GameArena {
       : null;
   }
 
-  #obtainDirectionalMatchInfo() {
-    const pickedTileType = this.#elemPickedTile.type;
-    const idxSeek = this.#elemTiles.indexOf(this.#elemPickedTile);
+  #obtainDirectionalMatchInfo(tileToAnalyze) {
+    const pickedTileType = tileToAnalyze.type;
+    const idxSeek = this.#elemTiles.indexOf(tileToAnalyze);
 
     return ["left", "up", "right", "down"].reduce((acc, dir) => {
       acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
