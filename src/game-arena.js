@@ -320,6 +320,20 @@ export class GameArena {
 
     let x;
 
+    if (this.#elemPickedTile === clickedTile) {
+      // Click to same element, deactivate use selection.
+      this.#resetUserSelection();
+
+      return undefined;
+    }
+
+    if (this.#elemPickedTile?.type === clickedTile?.type) {
+      // User clicked to the element of same type -- reset "picked" to new tile.
+      this.#resetUserSelectionWithNewPicked(clickedTile);
+
+      return undefined;
+    }
+
     if (
       this.#elemPickedTile &&
       !this.#elemTargetTile &&
@@ -346,14 +360,18 @@ export class GameArena {
       (this.#elemTargetTile || !(x = this.#isSecondTileOnSide(clickedTile)))
     ) {
       // Wrong 2nd tile clicked OR both already clicked: reset states and set new picked immediately.
-      this.#resetUserSelection();
-      this.#elemPickedTile = clickedTile;
-      this.#elemPickedTile.setPicked();
+      this.#resetUserSelectionWithNewPicked(clickedTile);
 
       return x;
     }
 
     return undefined;
+  }
+
+  #resetUserSelectionWithNewPicked(pickedTile) {
+    this.#resetUserSelection();
+    this.#elemPickedTile = pickedTile;
+    this.#elemPickedTile.setPicked();
   }
 
   #resetUserSelection() {
