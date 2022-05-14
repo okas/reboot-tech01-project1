@@ -320,6 +320,13 @@ export class GameArena {
 
     let x;
 
+    if (this.#elemPickedTile === clickedTile) {
+      // Click to same element, deactivate use selection.
+      this.#resetUserSelection();
+
+      return undefined;
+    }
+
     if (this.#elemPickedTile?.type === clickedTile?.type) {
       // User clicked to the element of same type -- reset "picked" to new tile.
       this.#resetUserSelectionWithNewPicked(clickedTile);
