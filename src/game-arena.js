@@ -88,6 +88,24 @@ export class GameArena {
     return tile;
   }
 
+  #setupMatchDirectionalActions() {
+    this.#matchSeekHelpersMap = new Map([
+      [
+        "left",
+        [this.#detectEdgeLeft.bind(this), this.#getIndexToLeft.bind(this)],
+      ],
+      ["up", [this.#detectEdgeUp.bind(this), this.#getIndexToUp.bind(this)]],
+      [
+        "right",
+        [this.#detectEdgeRight.bind(this), this.#getIndexToRight.bind(this)],
+      ],
+      [
+        "down",
+        [this.#detectEdgeDown.bind(this), this.#getIndexToDown.bind(this)],
+      ],
+    ]);
+  }
+
   /**
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
@@ -233,24 +251,6 @@ export class GameArena {
       acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
       return acc;
     }, {});
-  }
-
-  #setupMatchDirectionalActions() {
-    this.#matchSeekHelpersMap = new Map([
-      [
-        "left",
-        [this.#detectEdgeLeft.bind(this), this.#getIndexToLeft.bind(this)],
-      ],
-      ["up", [this.#detectEdgeUp.bind(this), this.#getIndexToUp.bind(this)]],
-      [
-        "right",
-        [this.#detectEdgeRight.bind(this), this.#getIndexToRight.bind(this)],
-      ],
-      [
-        "down",
-        [this.#detectEdgeDown.bind(this), this.#getIndexToDown.bind(this)],
-      ],
-    ]);
   }
 
   /**
