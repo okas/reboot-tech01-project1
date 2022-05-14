@@ -65,7 +65,7 @@ export class GameArena {
 
   #resetCanvasLayout() {
     const { gridTemplateColumns } = window.getComputedStyle(this.#elemCanvas);
-    const extractedColWidth = /\d+px/i.exec(gridTemplateColumns)[0];
+    const extractedColWidth = /\d+.?\d*px/i.exec(gridTemplateColumns)[0];
     const newValue = `repeat(${this.#cols}, ${extractedColWidth})`;
 
     this.#elemCanvas.style.gridTemplateColumns = newValue;
