@@ -1,6 +1,7 @@
 import { GameTile } from "./game-tile.js";
 import { rangeGenerator } from "./utilities.js";
 import { MatchInfo } from "./match-info.js";
+import { ComboMatchInfo } from "./combo-match-info.js";
 
 export class GameArena {
   /** @type {string} */
@@ -65,7 +66,7 @@ export class GameArena {
 
   #resetCanvasLayout() {
     const { gridTemplateColumns } = window.getComputedStyle(this.#elemCanvas);
-    const extractedColWidth = /\d+px/i.exec(gridTemplateColumns)[0];
+    const extractedColWidth = /\d+.?\d*px/i.exec(gridTemplateColumns)[0];
     const newValue = `repeat(${this.#cols}, ${extractedColWidth})`;
 
     this.#elemCanvas.style.gridTemplateColumns = newValue;
@@ -88,6 +89,24 @@ export class GameArena {
     return tile;
   }
 
+  #setupMatchDirectionalActions() {
+    this.#matchSeekHelpersMap = new Map([
+      [
+        "left",
+        [this.#detectEdgeLeft.bind(this), this.#getIndexToLeft.bind(this)],
+      ],
+      ["up", [this.#detectEdgeUp.bind(this), this.#getIndexToUp.bind(this)]],
+      [
+        "right",
+        [this.#detectEdgeRight.bind(this), this.#getIndexToRight.bind(this)],
+      ],
+      [
+        "down",
+        [this.#detectEdgeDown.bind(this), this.#getIndexToDown.bind(this)],
+      ],
+    ]);
+  }
+
   /**
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
@@ -101,11 +120,11 @@ export class GameArena {
 
     this.#swapUserSelectedTiles();
 
-    const matchInfo = this.#detectMatchXY();
-    console.debug(matchInfo);
+    const matchFixture = this.#calculateMatchByUserSelection();
+    console.debug(matchFixture);
 
-    if (matchInfo) {
-      this.#handleUserSuccessSelection(matchInfo);
+    if (matchFixture) {
+      this.#handleUserSuccessSelection(matchFixture);
     } else {
       this.#handleUserBadSelection();
     }
@@ -115,7 +134,7 @@ export class GameArena {
   }
 
   /**
-   * @param {MatchInfo} matchInfo
+   * @param {ComboMatchInfo} matchInfo
    */
   #handleUserSuccessSelection(matchInfo) {
     this.#resetUserSelection();
@@ -124,7 +143,7 @@ export class GameArena {
   }
 
   /**
-   * @param {MatchInfo} matchFixture
+   * @param {ComboMatchInfo} matchFixture
    */
   #bubbleMatchToTopEdge(matchFixture) {
     // TODO: this is on possibility to drive how bubbling takes place
@@ -132,7 +151,7 @@ export class GameArena {
 
     // Copy, because bubbling track will be tracked by removing tiles,
     // that are reached it's destination.
-    const fixtureRaw = new Set(matchFixture.all);
+    const fixtureRaw = new Set(matchFixture.domSortedTiles);
 
     while (fixtureRaw.size) {
       fixtureRaw.forEach((tileBubbling) => {
@@ -158,7 +177,7 @@ export class GameArena {
       return null;
     }
     /** @type {GameTile} */
-    const tile = this.#elemTiles.item(this.#indexToUp(indexMatchedTile));
+    const tile = this.#elemTiles.item(this.#getIndexToUp(indexMatchedTile));
 
     return tile.isHidden ? null : tile;
   }
@@ -172,10 +191,10 @@ export class GameArena {
   }
 
   /**
-   * @param {MatchInfo} matchInfo
+   * @param {ComboMatchInfo} matchInfo
    */
   #hideMatch(matchInfo) {
-    matchInfo.all.forEach((tile) => tile.setHidden());
+    matchInfo.domSortedTiles.forEach((tile) => tile.setHidden());
   }
 
   #swapUserSelectedTiles() {
@@ -207,17 +226,31 @@ export class GameArena {
     }
   }
 
-  #detectMatchXY() {
-    const mInfo = this.#obtainDirectionalMatchInfo();
+  #calculateMatchByUserSelection() {
+    const matchInfo1 = this.#detectMatchXY(this.#elemPickedTile);
+    const matchInfo2 = this.#detectMatchXY(this.#elemTargetTile);
+
+    return matchInfo1 || matchInfo2
+      ? new ComboMatchInfo(matchInfo1, matchInfo2)
+      : null;
+  }
+
+  /**
+   * Conducts analysis by X and Y axes around provided tile.
+   * @param {GameTile} tileToAnalyze
+   * @returns {MatchInfo} Analyzed tile is included in every or either axe.
+   */
+  #detectMatchXY(tileToAnalyze) {
+    const mInfo = this.#obtainDirectionalMatchInfo(tileToAnalyze);
 
     const matchX =
       mInfo.left?.length >= 1 || mInfo.right?.length >= 1
-        ? [...mInfo.left, this.#elemPickedTile, ...mInfo.right]
+        ? [...mInfo.left, tileToAnalyze, ...mInfo.right]
         : null;
 
     const matchY =
       mInfo.up?.length >= 1 || mInfo.down?.length >= 1
-        ? [...mInfo.up, this.#elemPickedTile, ...mInfo.down]
+        ? [...mInfo.up, tileToAnalyze, ...mInfo.down]
         : null;
 
     return matchX?.length >= 3 || matchY?.length >= 3
@@ -225,26 +258,14 @@ export class GameArena {
       : null;
   }
 
-  #obtainDirectionalMatchInfo() {
-    const pickedTileType = this.#elemPickedTile.type;
-    const idxSeek = this.#elemTiles.indexOf(this.#elemPickedTile);
+  #obtainDirectionalMatchInfo(tileToAnalyze) {
+    const pickedTileType = tileToAnalyze.type;
+    const idxSeek = this.#elemTiles.indexOf(tileToAnalyze);
 
     return ["left", "up", "right", "down"].reduce((acc, dir) => {
       acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
       return acc;
     }, {});
-  }
-
-  #setupMatchDirectionalActions() {
-    this.#matchSeekHelpersMap = new Map([
-      ["left", [this.#detectEdgeLeft.bind(this), this.#indexToLeft.bind(this)]],
-      ["up", [this.#detectEdgeUp.bind(this), this.#indexToUp.bind(this)]],
-      [
-        "right",
-        [this.#detectEdgeRight.bind(this), this.#indexToRight.bind(this)],
-      ],
-      ["down", [this.#detectEdgeDown.bind(this), this.#indexToDown.bind(this)]],
-    ]);
   }
 
   /**
@@ -253,15 +274,18 @@ export class GameArena {
    * @param {number} seekIndex
    */
   *#seekInDirection(direction, pickedTileType, seekIndex) {
-    const [edgeDetectFn, getDirectionIndexFn] =
+    const [edgeDetectOnDirectionFn, indexToDirectionFn] =
       this.#matchSeekHelpersMap.get(direction);
 
-    while (!edgeDetectFn(seekIndex)) {
-      seekIndex = getDirectionIndexFn(seekIndex);
+    // Detect edge on given direction, proceed, if no on the edge yet.
+    while (!edgeDetectOnDirectionFn(seekIndex)) {
+      // Move seek index to given direction.
+      seekIndex = indexToDirectionFn(seekIndex);
 
       /** @type {GameTile} */
-      const testTile = this.#elemTiles[seekIndex]; // step left!
+      const testTile = this.#elemTiles[seekIndex];
 
+      // Validate gainst match conditions.
       if (this.#isInMatch(testTile, pickedTileType)) {
         yield testTile;
       } else {
@@ -279,19 +303,19 @@ export class GameArena {
     return !isHidden && type === pickedTileType;
   }
 
-  #indexToLeft(indexReference) {
+  #getIndexToLeft(indexReference) {
     return --indexReference;
   }
 
-  #indexToUp(indexReference) {
+  #getIndexToUp(indexReference) {
     return indexReference - this.#rows;
   }
 
-  #indexToRight(indexReference) {
+  #getIndexToRight(indexReference) {
     return ++indexReference;
   }
 
-  #indexToDown(indexReference) {
+  #getIndexToDown(indexReference) {
     return indexReference + this.#rows;
   }
 
