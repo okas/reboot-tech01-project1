@@ -1,8 +1,9 @@
 import { GameTile } from "./game-tile.js";
-import { rangeGenerator } from "./utilities.js";
-import { MatchInfo } from "./match-info.js";
-import { ComboMatchInfo } from "./combo-match-info.js";
+import { TilePicker } from "./tile-picker.js";
 import { BoardWalker } from "./board-walker.js";
+import { MatchMaker } from "./match-maker.js";
+import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
+import { ComboMatchInfo } from "./combo-match-info.js";
 
 export class GameArena {
   /** @type {string} */
@@ -22,18 +23,15 @@ export class GameArena {
 
   /** @type {HTMLElement} */
   #elemCanvas;
-
-  /** @type {HTMLCollection} */
+  /** @type {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} */
   #elemTiles;
-  /** @type {GameTile} */
-  #elemPickedTile;
-  /** @type {GameTile} */
-  #elemTargetTile;
 
+  /** @type {TilePicker} */
+  #picker;
+  /** @type {BoardWalker} */
   #walker;
-
-  /** @type {Map<string, [Function, Function]>} */
-  #matchSeekHelpersMap;
+  /** @type {MatchMaker} */
+  #matcher;
 
   constructor({
     canvasId = "canvasId",
@@ -53,10 +51,6 @@ export class GameArena {
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
-
-    this.#walker = new BoardWalker(rows, cols);
-
-    this.#setupMatchDirectionalActions();
   }
 
   #initDOM() {
@@ -67,7 +61,8 @@ export class GameArena {
     this.#resetCanvasLayout();
     this.#elemCanvas.replaceChildren(...this.#createBoard());
     this.#elemTiles = this.#elemCanvas.children;
-    this.#elemTiles.indexOf = Array.prototype.indexOf;
+    extendFromArrayIndexOf(this.#elemTiles);
+    this.#initTools();
   }
 
   #resetCanvasLayout() {
@@ -95,44 +90,23 @@ export class GameArena {
     return tile;
   }
 
-  #setupMatchDirectionalActions() {
-    this.#matchSeekHelpersMap = new Map([
-      [
-        "left",
-        [
-          this.#walker.detectEdgeLeft.bind(this.#walker),
-          this.#walker.getIndexToLeft.bind(this.#walker),
-        ],
-      ],
-      [
-        "up",
-        [
-          this.#walker.detectEdgeUp.bind(this.#walker),
-          this.#walker.getIndexToUp.bind(this.#walker),
-        ],
-      ],
-      [
-        "right",
-        [
-          this.#walker.detectEdgeRight.bind(this.#walker),
-          this.#walker.getIndexToRight.bind(this.#walker),
-        ],
-      ],
-      [
-        "down",
-        [
-          this.#walker.detectEdgeDown.bind(this.#walker),
-          this.#walker.getIndexToDown.bind(this.#walker),
-        ],
-      ],
-    ]);
+  #initTools() {
+    this.#walker = new BoardWalker(this.#rows, this.#cols);
+    this.#matcher = new MatchMaker(
+      this.#rows,
+      this.#cols,
+      this.#elemTiles,
+      this.#walker
+    );
+    this.#picker = new TilePicker(this.#cols, this.#elemTiles);
   }
 
   /**
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
   #tileClickHandler({ target: clickedTile }) {
-    const intendedSwapDirection = this.#manageAndValidateSelection(clickedTile);
+    const intendedSwapDirection =
+      this.#picker.manageAndValidateSelection(clickedTile);
     console.debug(intendedSwapDirection);
 
     if (!intendedSwapDirection) {
@@ -149,16 +123,13 @@ export class GameArena {
     } else {
       this.#handleUserBadSelection();
     }
-
-    // TODO: ensure, that after successful it selection will be reset!
-    // At least keep an eye on this nuance!
   }
 
   /**
    * @param {ComboMatchInfo} matchInfo
    */
   #handleUserSuccessSelection(matchInfo) {
-    this.#resetUserSelection();
+    this.#picker.resetUserSelection();
     this.#hideMatch(matchInfo);
     this.#bubbleMatchToTopEdge(matchInfo);
   }
@@ -209,7 +180,7 @@ export class GameArena {
     const id = setTimeout(() => {
       clearTimeout(id);
       this.#swapUserSelectedTiles();
-      this.#resetUserSelection();
+      this.#picker.resetUserSelection();
     }, this.#badSwapTimeout);
   }
 
@@ -221,13 +192,13 @@ export class GameArena {
   }
 
   #swapUserSelectedTiles() {
-    if (!this.#elemPickedTile || !this.#elemTargetTile) {
+    if (!this.#picker.firstTile || !this.#picker.secondTile) {
       throw new Error(
         "Developer error: tile swapping failed: at least one of the subjected tiles is not set."
       );
     }
 
-    this.#swapTiles(this.#elemPickedTile, this.#elemTargetTile);
+    this.#swapTiles(this.#picker.firstTile, this.#picker.secondTile);
   }
 
   /**
@@ -250,167 +221,11 @@ export class GameArena {
   }
 
   #calculateMatchByUserSelection() {
-    const matchInfo1 = this.#detectMatchXY(this.#elemPickedTile);
-    const matchInfo2 = this.#detectMatchXY(this.#elemTargetTile);
+    const matchInfo1 = this.#matcher.detectMatchXY(this.#picker.firstTile);
+    const matchInfo2 = this.#matcher.detectMatchXY(this.#picker.secondTile);
 
     return matchInfo1 || matchInfo2
       ? new ComboMatchInfo(matchInfo1, matchInfo2)
       : null;
-  }
-
-  /**
-   * Conducts analysis by X and Y axes around provided tile.
-   * @param {GameTile} tileToAnalyze
-   * @returns {MatchInfo} Analyzed tile is included in every or either axe.
-   */
-  #detectMatchXY(tileToAnalyze) {
-    const mInfo = this.#obtainDirectionalMatchInfo(tileToAnalyze);
-
-    const matchX =
-      mInfo.left?.length >= 1 || mInfo.right?.length >= 1
-        ? [...mInfo.left, tileToAnalyze, ...mInfo.right]
-        : null;
-
-    const matchY =
-      mInfo.up?.length >= 1 || mInfo.down?.length >= 1
-        ? [...mInfo.up, tileToAnalyze, ...mInfo.down]
-        : null;
-
-    return matchX?.length >= 3 || matchY?.length >= 3
-      ? new MatchInfo(matchX, matchY)
-      : null;
-  }
-
-  #obtainDirectionalMatchInfo(tileToAnalyze) {
-    const pickedTileType = tileToAnalyze.type;
-    const idxSeek = this.#elemTiles.indexOf(tileToAnalyze);
-
-    return ["left", "up", "right", "down"].reduce((acc, dir) => {
-      acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
-      return acc;
-    }, {});
-  }
-
-  /**
-   * @param {string} direction `left` | `up` |`right` |`down`
-   * @param {number} pickedTileType
-   * @param {number} seekIndex
-   */
-  *#seekInDirection(direction, pickedTileType, seekIndex) {
-    const [edgeDetectOnDirectionFn, indexToDirectionFn] =
-      this.#matchSeekHelpersMap.get(direction);
-
-    // Detect edge on given direction, proceed, if no on the edge yet.
-    while (!edgeDetectOnDirectionFn(seekIndex)) {
-      // Move seek index to given direction.
-      seekIndex = indexToDirectionFn(seekIndex);
-
-      /** @type {GameTile} */
-      const testTile = this.#elemTiles[seekIndex];
-
-      // Validate gainst match conditions.
-      if (this.#isInMatch(testTile, pickedTileType)) {
-        yield testTile;
-      } else {
-        return;
-      }
-    }
-  }
-
-  /**
-   * Validates whether seeked element can be included in match.
-   * @param {GameTile} testTile
-   * @param {number} pickedTileType
-   */
-  #isInMatch({ isHidden, type }, pickedTileType) {
-    return !isHidden && type === pickedTileType;
-  }
-
-  /**
-   * @param  {GameTile} clickedTile
-   */
-  #manageAndValidateSelection(clickedTile) {
-    // To guarantee, that only two, consequent tile can be clicked.
-    // If not consequent then set update states and "release" the second attempted tile.
-
-    let x;
-
-    if (this.#elemPickedTile === clickedTile) {
-      // Click to same element, deactivate use selection.
-      this.#resetUserSelection();
-
-      return undefined;
-    }
-
-    if (this.#elemPickedTile?.type === clickedTile?.type) {
-      // User clicked to the element of same type -- reset "picked" to new tile.
-      this.#resetUserSelectionWithNewPicked(clickedTile);
-
-      return undefined;
-    }
-
-    if (
-      this.#elemPickedTile &&
-      !this.#elemTargetTile &&
-      (x = this.#isSecondTileOnSide(clickedTile))
-    ) {
-      // Scenario of 2 consequent tiles: set the states and...
-      this.#elemTargetTile = clickedTile;
-      this.#elemTargetTile.setTarget();
-      // ... start match evaluation
-
-      return x;
-    }
-
-    if (!this.#elemPickedTile) {
-      // First element will be picked
-      this.#elemPickedTile = clickedTile;
-      this.#elemPickedTile.setPicked();
-
-      return undefined;
-    }
-
-    if (
-      this.#elemPickedTile &&
-      (this.#elemTargetTile || !(x = this.#isSecondTileOnSide(clickedTile)))
-    ) {
-      // Wrong 2nd tile clicked OR both already clicked: reset states and set new picked immediately.
-      this.#resetUserSelectionWithNewPicked(clickedTile);
-
-      return x;
-    }
-
-    return undefined;
-  }
-
-  #resetUserSelectionWithNewPicked(pickedTile) {
-    this.#resetUserSelection();
-    this.#elemPickedTile = pickedTile;
-    this.#elemPickedTile.setPicked();
-  }
-
-  #resetUserSelection() {
-    this.#elemPickedTile?.unSetPicked().unSetTarget();
-    this.#elemTargetTile?.unSetPicked().unSetTarget();
-    this.#elemPickedTile = this.#elemTargetTile = null;
-  }
-
-  /**
-   * @param  {GameTile} target
-   */
-  #isSecondTileOnSide(target) {
-    const x = this.#elemTiles.indexOf(target);
-    const y = this.#elemTiles.indexOf(this.#elemPickedTile);
-
-    switch (x - y) {
-      case -1:
-        return "left";
-      case -this.#cols:
-        return "up";
-      case +this.#cols:
-        return "down";
-      case 1:
-        return "right";
-    }
   }
 }
