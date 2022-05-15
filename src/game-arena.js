@@ -2,6 +2,7 @@ import { GameTile } from "./game-tile.js";
 import { TilePicker } from "./tile-picker.js";
 import { BoardWalker } from "./board-walker.js";
 import { MatchMaker } from "./match-maker.js";
+import { TileMover } from "./tile-mover.js";
 import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
 import { ComboMatchInfo } from "./combo-match-info.js";
 
@@ -32,6 +33,8 @@ export class GameArena {
   #walker;
   /** @type {MatchMaker} */
   #matcher;
+  /** @type {TileMover} */
+  #mover;
 
   constructor({
     canvasId = "canvasId",
@@ -99,6 +102,12 @@ export class GameArena {
       this.#walker
     );
     this.#picker = new TilePicker(this.#cols, this.#elemTiles);
+    this.#mover = new TileMover(
+      this.#rows,
+      this.#cols,
+      this.#elemTiles,
+      this.#walker
+    );
   }
 
   /**
@@ -131,49 +140,7 @@ export class GameArena {
   #handleUserSuccessSelection(matchInfo) {
     this.#picker.resetUserSelection();
     this.#hideMatch(matchInfo);
-    this.#bubbleMatchToTopEdge(matchInfo);
-  }
-
-  /**
-   * @param {ComboMatchInfo} matchFixture
-   */
-  #bubbleMatchToTopEdge(matchFixture) {
-    // TODO: this is on possibility to drive how bubbling takes place
-    // TODO: and feed the animation.
-
-    // Copy, because bubbling track will be tracked by removing tiles,
-    // that are reached it's destination.
-    const fixtureRaw = new Set(matchFixture.domSortedTiles);
-
-    while (fixtureRaw.size) {
-      fixtureRaw.forEach((tileBubbling) => {
-        // TODO: duplicate find of index; swapping does the same!
-        const idxMatchTile = this.#elemTiles.indexOf(tileBubbling);
-
-        const tileFalling = this.#tryGetFallingTile(idxMatchTile);
-
-        if (tileFalling) {
-          this.#swapTiles(tileBubbling, tileFalling);
-        } else {
-          fixtureRaw.delete(tileBubbling);
-        }
-      });
-    }
-  }
-
-  /**
-   * @param {number} indexMatchedTile
-   */
-  #tryGetFallingTile(indexMatchedTile) {
-    if (this.#walker.detectEdgeUp(indexMatchedTile)) {
-      return null;
-    }
-    /** @type {GameTile} */
-    const tile = this.#elemTiles.item(
-      this.#walker.getIndexToUp(indexMatchedTile)
-    );
-
-    return tile.isHidden ? null : tile;
+    this.#mover.bubbleMatchToTopEdge(matchInfo);
   }
 
   #handleUserBadSelection() {
@@ -198,26 +165,7 @@ export class GameArena {
       );
     }
 
-    this.#swapTiles(this.#picker.firstTile, this.#picker.secondTile);
-  }
-
-  /**
-   * Swap provided tiles in DOM.
-   * @param {GameTile} tile1
-   * @param {GameTile} tile2
-   */
-  #swapTiles(tile1, tile2) {
-    const idxInitialTile1 = this.#elemTiles.indexOf(tile1);
-
-    if (
-      tile1.compareDocumentPosition(tile2) & Node.DOCUMENT_POSITION_PRECEDING // left | up ?
-    ) {
-      tile2.after(tile1);
-      this.#elemTiles.item(idxInitialTile1).after(tile2);
-    } else {
-      tile2.before(tile1);
-      this.#elemTiles.item(idxInitialTile1).before(tile2);
-    }
+    this.#mover.swapTiles(this.#picker.firstTile, this.#picker.secondTile);
   }
 
   #calculateMatchByUserSelection() {
