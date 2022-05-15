@@ -134,6 +134,15 @@ export class GameArena {
     }
   }
 
+  #calculateMatchByUserSelection() {
+    const matchInfo1 = this.#matcher.detectMatchXY(this.#picker.firstTile);
+    const matchInfo2 = this.#matcher.detectMatchXY(this.#picker.secondTile);
+
+    return matchInfo1 || matchInfo2
+      ? new ComboMatchInfo(matchInfo1, matchInfo2)
+      : null;
+  }
+
   /**
    * @param {ComboMatchInfo} matchInfo
    */
@@ -141,6 +150,13 @@ export class GameArena {
     this.#picker.resetUserSelection();
     this.#hideMatch(matchInfo);
     this.#mover.bubbleMatchToTopEdge(matchInfo);
+  }
+
+  /**
+   * @param {ComboMatchInfo} matchInfo
+   */
+  #hideMatch(matchInfo) {
+    matchInfo.domSortedTiles.forEach((tile) => tile.setHidden());
   }
 
   #handleUserBadSelection() {
@@ -151,13 +167,6 @@ export class GameArena {
     }, this.#badSwapTimeout);
   }
 
-  /**
-   * @param {ComboMatchInfo} matchInfo
-   */
-  #hideMatch(matchInfo) {
-    matchInfo.domSortedTiles.forEach((tile) => tile.setHidden());
-  }
-
   #swapUserSelectedTiles() {
     if (!this.#picker.firstTile || !this.#picker.secondTile) {
       throw new Error(
@@ -166,14 +175,5 @@ export class GameArena {
     }
 
     this.#mover.swapTiles(this.#picker.firstTile, this.#picker.secondTile);
-  }
-
-  #calculateMatchByUserSelection() {
-    const matchInfo1 = this.#matcher.detectMatchXY(this.#picker.firstTile);
-    const matchInfo2 = this.#matcher.detectMatchXY(this.#picker.secondTile);
-
-    return matchInfo1 || matchInfo2
-      ? new ComboMatchInfo(matchInfo1, matchInfo2)
-      : null;
   }
 }
