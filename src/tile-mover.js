@@ -48,7 +48,7 @@ export class TileMover {
 
     // Copy, because bubbling track will be tracked by removing tiles,
     // that are reached it's destination.
-    const fixtureRaw = new Set(matchFixture.domSortedTiles);
+    const fixtureRaw = new Set(matchFixture.allDomSorted);
 
     while (fixtureRaw.size) {
       fixtureRaw.forEach((tileBubbling) => {

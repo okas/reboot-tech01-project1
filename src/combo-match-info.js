@@ -14,7 +14,7 @@ export class ComboMatchInfo {
     this.#combo = args.filter((m) => m);
   }
 
-  get domSortedTiles() {
+  get allDomSorted() {
     return (this.#all ??= this.#sortSetsByFirstNode());
   }
 

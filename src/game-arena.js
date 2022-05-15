@@ -156,7 +156,7 @@ export class GameArena {
    * @param {ComboMatchInfo} matchInfo
    */
   #hideMatch(matchInfo) {
-    matchInfo.domSortedTiles.forEach((tile) => tile.setHidden());
+    matchInfo.allDomSorted.forEach((tile) => tile.setHidden());
   }
 
   #handleUserBadSelection() {
