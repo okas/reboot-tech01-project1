@@ -1,7 +1,7 @@
 import { GameTile } from "./game-tile.js";
 import { TilePicker } from "./tile-picker.js";
 import { BoardWalker } from "./board-walker.js";
-import { MatchMaker } from "./match-maker.js";
+import { TileMatcher } from "./tile-matcher.js";
 import { TileMover } from "./tile-mover.js";
 import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
 import { ComboMatchInfo } from "./combo-match-info.js";
@@ -31,7 +31,7 @@ export class GameArena {
   #picker;
   /** @type {BoardWalker} */
   #walker;
-  /** @type {MatchMaker} */
+  /** @type {TileMatcher} */
   #matcher;
   /** @type {TileMover} */
   #mover;
@@ -95,7 +95,7 @@ export class GameArena {
 
   #initTools() {
     this.#walker = new BoardWalker(this.#rows, this.#cols);
-    this.#matcher = new MatchMaker(
+    this.#matcher = new TileMatcher(
       this.#rows,
       this.#cols,
       this.#elemTiles,

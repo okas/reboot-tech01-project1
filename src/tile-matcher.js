@@ -1,7 +1,7 @@
 import { extendFromArrayIndexOf } from "./utilities.js";
 import { MatchInfo } from "./match-info.js";
 
-export class MatchMaker {
+export class TileMatcher {
   #rows;
   #cols;
   #elemTiles;
