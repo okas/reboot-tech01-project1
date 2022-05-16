@@ -124,7 +124,7 @@ export class GameArena {
 
     this.#swapUserSelectedTiles();
 
-    const matchFixture = this.#calculateMatchByUserSelection();
+    const matchFixture = this.#tryFindMatchesByUserSelection();
     console.debug(matchFixture);
 
     if (matchFixture) {
@@ -137,22 +137,25 @@ export class GameArena {
     }
   }
 
-  #calculateMatchByUserSelection() {
-    const matchInfo1 = this.#matcher.detectMatchXY(this.#picker.firstTile);
-    const matchInfo2 = this.#matcher.detectMatchXY(this.#picker.secondTile);
-
-    return matchInfo1 || matchInfo2
-      ? new MatchInfoCombo(this.#elemTiles, matchInfo1, matchInfo2)
-      : null;
+  #tryFindMatchesByUserSelection() {
+    return this.#tryFindMatches(
+      this.#picker.firstTile,
+      this.#picker.secondTile
+    );
   }
 
   /**
    * @param {MatchInfoCombo} matchInfo
    */
   #handleUserSuccessSelection(matchInfo) {
-    // TODO needs refactor!
     this.#picker.resetUserSelection();
+    this.#matchCollapseRecursive(matchInfo);
+  }
 
+  /**
+   * @param {MatchInfoCombo} matchInfo
+   */
+  #matchCollapseRecursive(matchInfo) {
     this.#markMatchedTiles(matchInfo);
 
     const preBubbleSnap = [...matchInfo.takeSnapShot()];
@@ -171,10 +174,10 @@ export class GameArena {
 
     // }
 
-    const newMatchesAfterCollapse = this.#tryFindNewMatches(collapsedStack);
+    const newMatchesAfterCollapse = this.#tryFindMatches(...collapsedStack);
 
     if (newMatchesAfterCollapse) {
-      const result = this.#handleUserSuccessSelection(newMatchesAfterCollapse);
+      const result = this.#matchCollapseRecursive(newMatchesAfterCollapse);
       result.matches.push(matchInfo);
       result.collapses.push(collapsedStack);
 
@@ -190,7 +193,7 @@ export class GameArena {
   /**
    * @param {GameTile[]} tilesToAnalyze
    */
-  #tryFindNewMatches(tilesToAnalyze) {
+  #tryFindMatches(...tilesToAnalyze) {
     const matches = [...tilesToAnalyze]
       .map((tile) => this.#matcher.detectMatchXY(tile))
       .filter((m) => m);
