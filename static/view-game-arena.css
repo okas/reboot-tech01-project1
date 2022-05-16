@@ -88,3 +88,11 @@ header {
 #view-game-arena footer {
   grid-area: footer;
 }
+
+#footer-image {
+  margin-left: 180px;
+}
+
+.footer-tiles-faces {
+  width: 400px;
+}
