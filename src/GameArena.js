@@ -75,7 +75,9 @@ export class GameArena {
       ...this.#tileFactory(this.#rows * this.#cols)
     );
     this.#elemTiles = this.#elemCanvas.children;
+
     extendFromArrayIndexOf(this.#elemTiles);
+
     this.#initTools();
   }
 
@@ -133,25 +135,22 @@ export class GameArena {
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
   async #tileClickHandler({ target: clickedTile }) {
-    const intendedSwapDirection =
-      this.#picker.manageAndValidateSelection(clickedTile);
-    console.debug(intendedSwapDirection);
+    const intendedSwapDirection = this.#picker.analyzeSelection(clickedTile);
 
     if (!intendedSwapDirection) {
       return;
     }
 
+    console.debug(
+      `User picked and put tile to ${intendedSwapDirection} direction.`
+    );
+
     this.#swapUserSelectedTiles();
 
     const matchFixture = this.#tryFindMatchesByUserSelection();
-    console.debug(matchFixture);
 
     if (matchFixture) {
-      await sleep(this.#actionDelay);
       this.#handleUserSuccessSelection(matchFixture);
-
-      // TODO: reset stack, if cycle is done!
-      // TODO: reset match, if cycle is done!
     } else {
       this.#handleUserBadSelection();
     }
@@ -168,75 +167,52 @@ export class GameArena {
    * @param {MatchInfoCombo} matchInfo
    */
   async #handleUserSuccessSelection(matchInfo) {
+    console.debug("User have selected matching tiles.");
+    await sleep(this.#actionDelay);
     this.#picker.resetUserSelection();
-    const { matches } = await this.#matchCollapseRecursive(matchInfo);
-    // TODO handle collapsed tiles status clearing.
-
-    await this.#generateNewTiles(matches);
-
-    // TODO: should start recursion somewhere here,
-    // cause filling canvas with tiles must init new match -> collapse - LOOP.
+    await this.#startMainRecursive(matchInfo);
+    console.debug("Done with matching series!");
   }
 
   /**
-   * Generate new life here....
-   * @param {MatchInfoCombo[]} allMatchesData
+   * @param {MatchInfoCombo} matchInfo
+   * @return {Promise<MatchInfoCombo[]}>}
    */
-  async #generateNewTiles(allMatchesData) {
-    const allFlatMatchTiles = allMatchesData
-      .flatMap(({ allDomSorted }) => allDomSorted)
-      .sort(MatchInfoBase.domSortAsc);
+  async #startMainRecursive(matchInfo) {
+    const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
 
-    console.debug(allFlatMatchTiles);
+    const newTiles = await this.#generateNewTiles(bubbledMatches);
+    const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
-    const newTileGen = this.#tileFactory(allFlatMatchTiles.length);
-
-    for await (const oldTile of allFlatMatchTiles) {
-      oldTile.replaceWith(newTileGen.next().value);
-      await sleep(this.#actionDelay / 6);
+    if (matchInfoOfNewTiles) {
+      console.debug("New tiles generates matches, working them through now...");
+      await this.#startMainRecursive(matchInfoOfNewTiles);
     }
   }
 
   /**
    * @param {MatchInfoCombo} matchInfo
-   * @return {Promise<{matches: MatchInfoCombo[], collapses: GameTile[][]}>}
+   * @return {Promise< MatchInfoCombo[]}>}
    */
   async #matchCollapseRecursive(matchInfo) {
     await this.#markMatchedTiles(matchInfo);
     await sleep(this.#actionDelay / 1.6);
 
-    const preBubbleSnap = [...matchInfo.takeSnapShot()];
-    console.debug("before: ", preBubbleSnap);
-
     const collapsedStack = await this.#mover.bubbleMatchToTopEdge(matchInfo);
 
+    // This marking is beneficial to detect stack movements and for fine matching within it.
     this.#markCollapsedTiles(collapsedStack);
-
-    const postBubbleSnap = [...matchInfo.takeSnapShot()];
-    console.debug("after: ", postBubbleSnap);
-
-    // BUG: current match data snapshot do not reveal always the change in stack!
-    // TODO: Will turn off snapshot comparison for now, needs reiteration.
-    // if (!MatchInfoBase.compareSnapshots(preBubbleSnap, postBubbleSnap)) {
-
-    // }
-
     const newMatchesAfterCollapse = this.#tryFindMatches(...collapsedStack);
+    this.#clearCollapsedTiles(collapsedStack);
 
-    if (newMatchesAfterCollapse) {
-      const result = await this.#matchCollapseRecursive(
-        newMatchesAfterCollapse
-      );
-      result.matches.push(matchInfo);
-      result.collapses.push(collapsedStack);
-
-      return result;
+    if (!newMatchesAfterCollapse) {
+      return [matchInfo];
     }
 
-    return {
-      matches: [matchInfo],
-      collapses: [collapsedStack],
-    };
+    const result = await this.#matchCollapseRecursive(newMatchesAfterCollapse);
+    result.push(matchInfo);
+
+    return result;
   }
 
   /**
@@ -269,7 +245,39 @@ export class GameArena {
     collapsedStack.forEach((tile) => tile.setCollapsed());
   }
 
+  /**
+   * @param {GameTile[]} collapsedStack
+   */
+  #clearCollapsedTiles(collapsedStack) {
+    collapsedStack.forEach((tile) => tile.unSetCollapsed());
+  }
+
+  /**
+   * Generate tiles and replace, thy replace matched tiles, that are now bubbled up.
+   * @param {MatchInfoCombo[]} allMatchesData
+   * @return {Promise<GameTile[]>}
+   */
+  async #generateNewTiles(allMatchesData) {
+    const allFlatMatchTiles = allMatchesData
+      .flatMap(({ allDomSorted }) => allDomSorted)
+      .sort(MatchInfoBase.domSortAsc);
+
+    const newTileGen = this.#tileFactory(allFlatMatchTiles.length);
+
+    const result = [];
+
+    for await (const oldTile of allFlatMatchTiles) {
+      const newTile = newTileGen.next().value;
+      oldTile.replaceWith(newTile);
+      result.push(newTile);
+      await sleep(this.#actionDelay / 6);
+    }
+
+    return result;
+  }
+
   async #handleUserBadSelection() {
+    console.debug("User selection did not encounter matches.");
     await sleep(this.#badSwapTimeout);
     this.#swapUserSelectedTiles();
     this.#picker.resetUserSelection();

@@ -23,7 +23,7 @@ export class TilePicker {
   /**
    * @param  {GameTile} clickedTile
    */
-  manageAndValidateSelection(clickedTile) {
+  analyzeSelection(clickedTile) {
     // To guarantee, that only two, consequent tile can be clicked.
     // If not consequent then set update states and "release" the second attempted tile.
 

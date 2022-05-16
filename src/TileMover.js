@@ -20,6 +20,7 @@ export class TileMover {
     this.#elemTiles = tileElements;
     this.#walker = walker;
     this.#timerInterval = timerInterval;
+
     extendFromArrayIndexOf(tileElements);
   }
 

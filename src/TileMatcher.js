@@ -64,17 +64,11 @@ export class TileMatcher {
    * @returns {MatchInfo} Analyzed tile is included in every or either axe.
    */
   detectMatchXY(tileToAnalyze) {
-    const mInfo = this.#obtainDirectionalMatchInfo(tileToAnalyze);
+    const raw = this.#obtainDirectionalMatchInfo(tileToAnalyze);
 
-    const matchX =
-      mInfo.left?.length >= 1 || mInfo.right?.length >= 1
-        ? [...mInfo.left, tileToAnalyze, ...mInfo.right]
-        : null;
+    const matchX = [...(raw.left ?? []), tileToAnalyze, ...(raw.right ?? [])];
 
-    const matchY =
-      mInfo.up?.length >= 1 || mInfo.down?.length >= 1
-        ? [...mInfo.up, tileToAnalyze, ...mInfo.down]
-        : null;
+    const matchY = [...(raw.up ?? []), tileToAnalyze, ...(raw.down ?? [])];
 
     return matchX?.length >= 3 || matchY?.length >= 3
       ? new MatchInfo(this.#elemTiles, matchX, matchY)
