@@ -96,7 +96,7 @@ export class GameTile extends HTMLDivElement {
   }
 
   setCollapsed() {
-    this.classList.add("hidden");
+    this.classList.add("collapsed");
     return this;
   }
 
