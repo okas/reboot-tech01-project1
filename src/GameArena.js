@@ -5,7 +5,6 @@ import { TileMatcher } from "./TileMatcher.js";
 import { TileMover } from "./TileMover.js";
 import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
-import { MatchInfoBase } from "./MatchInfoBase.js";
 
 export class GameArena {
   /** @type {string} */
@@ -130,6 +129,9 @@ export class GameArena {
 
     if (matchFixture) {
       this.#handleUserSuccessSelection(matchFixture);
+
+      // TODO: reset stack, if cycle is done!
+      // TODO: reset match, if cycle is done!
     } else {
       this.#handleUserBadSelection();
     }
@@ -148,27 +150,54 @@ export class GameArena {
    * @param {MatchInfoCombo} matchInfo
    */
   #handleUserSuccessSelection(matchInfo) {
+    // TODO needs refactor!
     this.#picker.resetUserSelection();
 
     this.#markMatchedTiles(matchInfo);
 
     const preBubbleSnap = [...matchInfo.takeSnapShot()];
-    console.log("before: ", preBubbleSnap);
+    console.debug("before: ", preBubbleSnap);
 
     const collapsedStack = this.#mover.bubbleMatchToTopEdge(matchInfo);
 
     this.#markCollapsedTiles(collapsedStack);
 
     const postBubbleSnap = [...matchInfo.takeSnapShot()];
-    console.log("after: ", postBubbleSnap);
+    console.debug("after: ", postBubbleSnap);
 
-    console.log(
-      "Is stack shape changed?: ",
-      !MatchInfoBase.compareSnapshots(preBubbleSnap, postBubbleSnap)
-    );
+    // BUG: current match data snapshot do not reveal always the change in stack!
+    // TODO: Will turn off snapshot comparison for now, needs reiteration.
+    // if (!MatchInfoBase.compareSnapshots(preBubbleSnap, postBubbleSnap)) {
 
-    // TODO: reset stack, if cycle is done!
-    // TODO: reset match, if cycle is done!
+    // }
+
+    const newMatchesAfterCollapse = this.#tryFindNewMatches(collapsedStack);
+
+    if (newMatchesAfterCollapse) {
+      const result = this.#handleUserSuccessSelection(newMatchesAfterCollapse);
+      result.matches.push(matchInfo);
+      result.collapses.push(collapsedStack);
+
+      return result;
+    }
+
+    return {
+      matches: [matchInfo],
+      collapses: [collapsedStack],
+    };
+  }
+
+  /**
+   * @param {GameTile[]} tilesToAnalyze
+   */
+  #tryFindNewMatches(tilesToAnalyze) {
+    const matches = [...tilesToAnalyze]
+      .map((tile) => this.#matcher.detectMatchXY(tile))
+      .filter((m) => m);
+
+    return matches?.length
+      ? new MatchInfoCombo(this.#elemTiles, ...matches)
+      : null;
   }
 
   /**

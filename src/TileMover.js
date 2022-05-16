@@ -47,11 +47,15 @@ export class TileMover {
     // TODO: this is on possibility to drive how bubbling takes place
     // TODO: and feed the animation.
 
+    // TODO: Try hook-in stack snapshot **before** it's shape change here!
+    // Proposition: try to get the shape of the bottom of stack at least.
+    // OR: if there is situation of duplicates in collapsedTiles, is it solid indication?
+
     // Copy, because bubbling track will be tracked by removing tiles,
     // that are reached it's destination.
     const fixtureRaw = new Set(matchFixture.allDomSorted);
 
-    const collapsedTiles = [];
+    const collapsedTiles = new Set();
 
     while (fixtureRaw.size) {
       fixtureRaw.forEach((tileBubbling) => {
@@ -60,7 +64,7 @@ export class TileMover {
         const tileFalling = this.#tryGetFallingTile(idxMatchTile);
 
         if (tileFalling) {
-          collapsedTiles.push(tileFalling);
+          collapsedTiles.add(tileFalling);
           this.swapTiles(tileBubbling, tileFalling);
         } else {
           fixtureRaw.delete(tileBubbling);
