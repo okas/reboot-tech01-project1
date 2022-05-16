@@ -1,4 +1,4 @@
-import { MatchInfo } from "./match-info.js";
+import { MatchInfoBase } from "./match-info-base.js";
 
 export class ComboMatchInfo {
   /** @type {MatchInfo[]} */
@@ -15,24 +15,21 @@ export class ComboMatchInfo {
   }
 
   get allDomSorted() {
-    return (this.#all ??= this.#sortSetsByFirstNode());
+    return (this.#all ??= this.#allToSortedSet());
   }
 
-  #sortSetsByFirstNode() {
+  #allToSortedSet() {
     /** @type {GameTile[]} */
-    const temp = [...this.#test()].sort(MatchInfo.domSortAsc);
+    const all = [...this._allCombiner()];
 
-    return new Set(temp);
+    all.sort(MatchInfoBase.domSortAsc);
+
+    return new Set(all);
   }
 
-  *#test() {
-    for (const { arrX, arrY } of this.#combo) {
-      for (const tile of arrX ?? []) {
-        yield tile;
-      }
-      for (const tile of arrY ?? []) {
-        yield tile;
-      }
+  *_allCombiner() {
+    for (const match of this.#combo) {
+      yield* match._allCombiner();
     }
   }
 }

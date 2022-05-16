@@ -1,3 +1,5 @@
+import { MatchInfoBase } from "./match-info-base.js";
+
 export class MatchInfo {
   arrX;
   arrY;
@@ -20,31 +22,27 @@ export class MatchInfo {
    * but is essential for matched tile bubbling control.
    */
   get allDomSorted() {
-    return (this.#all ??= this.#toSortedSet());
+    return (this.#all ??= this.#allToSortedSet());
   }
 
   /**
    * @returns {Set<GameTile>}
    */
-  #toSortedSet() {
+  #allToSortedSet() {
     /** @type {Node[]} */
-    const all = [...(this.arrX ?? []), ...(this.arrY ?? [])];
+    const all = [...this._allCombiner()];
 
-    all.sort(MatchInfo.domSortAsc);
+    all.sort(MatchInfoBase.domSortAsc);
 
     return new Set(all);
   }
 
-  /**
-   * Used HTML DOM Node api to compare
-   * @param {Node} a The Node to evaluate against other node.
-   * @param {Node} b A Reference node in relation other node is compared to.
-   * @returns 1: `Node a` precedes `Node b`; -1 otherwise.
-   * @see {@link [Node.compareDocumentPosition](https://developer.mozilla.org/en-US/docs/Web/API/Node/compareDocumentPosition)}
-   */
-  static domSortAsc(a, b) {
-    return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_PRECEDING
-      ? 1
-      : -1;
+  *_allCombiner() {
+    for (const tile of this.arrX ?? []) {
+      yield tile;
+    }
+    for (const tile of this.arrY ?? []) {
+      yield tile;
+    }
   }
 }

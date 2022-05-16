@@ -149,7 +149,13 @@ export class GameArena {
   #handleUserSuccessSelection(matchInfo) {
     this.#picker.resetUserSelection();
     this.#markMatchedTiles(matchInfo);
+
+    // const preBubbleSnap = matchInfo.takeSnapshot();
+    // console.log("before: ", preBubbleSnap);
+
     this.#mover.bubbleMatchToTopEdge(matchInfo);
+    // const postBubbleSnap = matchInfo.takeSnapshot();
+    // console.log("after: ", postBubbleSnap);
   }
 
   /**
