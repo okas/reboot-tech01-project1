@@ -122,7 +122,7 @@ export class TileMatcher {
    * @param {GameTile} testTile
    * @param {number} pickedTileType
    */
-  #isInMatch({ isHidden, type }, pickedTileType) {
-    return !isHidden && type === pickedTileType;
+  #isInMatch({ isMatched, type }, pickedTileType) {
+    return !isMatched && type === pickedTileType;
   }
 }

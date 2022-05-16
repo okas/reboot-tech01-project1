@@ -77,6 +77,6 @@ export class TileMover {
       this.#walker.getIndexToUp(indexMatchedTile)
     );
 
-    return tile.isHidden ? null : tile;
+    return tile.isMatched ? null : tile;
   }
 }

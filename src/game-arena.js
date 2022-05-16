@@ -148,15 +148,15 @@ export class GameArena {
    */
   #handleUserSuccessSelection(matchInfo) {
     this.#picker.resetUserSelection();
-    this.#hideMatch(matchInfo);
+    this.#markMatchedTiles(matchInfo);
     this.#mover.bubbleMatchToTopEdge(matchInfo);
   }
 
   /**
    * @param {ComboMatchInfo} matchInfo
    */
-  #hideMatch(matchInfo) {
-    matchInfo.allDomSorted.forEach((tile) => tile.setHidden());
+  #markMatchedTiles(matchInfo) {
+    matchInfo.allDomSorted.forEach((tile) => tile.setMatched());
   }
 
   #handleUserBadSelection() {
