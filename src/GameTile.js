@@ -30,7 +30,7 @@ export class GameTile extends HTMLDivElement {
   constructor({ id, type, worth, leverage }) {
     super();
 
-    this.id = id;
+    this.id = `t_${id}`;
     this.#type = type;
     this.#worth = worth;
     this.#leverage = leverage;

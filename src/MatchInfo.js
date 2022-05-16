@@ -11,7 +11,7 @@ export class MatchInfo extends MatchInfoBase {
    */
   constructor(elemTiles, arrX, arrY) {
     super(elemTiles);
-    // To protect form outside changes.
+    // To protect form possible outside changes.
     this.arrX = [...(arrX ?? [])];
     this.arrY = [...(arrY ?? [])];
   }
