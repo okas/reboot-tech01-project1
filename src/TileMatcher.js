@@ -1,5 +1,5 @@
 import { extendFromArrayIndexOf } from "./utilities.js";
-import { MatchInfo } from "./match-info.js";
+import { MatchInfo } from "./MatchInfo.js";
 
 export class TileMatcher {
   #rows;

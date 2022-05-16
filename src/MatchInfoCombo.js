@@ -1,6 +1,6 @@
-import { MatchInfoBase } from "./match-info-base.js";
+import { MatchInfoBase } from "./MatchInfoBase.js";
 
-export class ComboMatchInfo extends MatchInfoBase {
+export class MatchInfoCombo extends MatchInfoBase {
   /** @type {MatchInfo[]} */
   #combo;
 

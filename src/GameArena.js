@@ -1,10 +1,10 @@
-import { GameTile } from "./game-tile.js";
-import { TilePicker } from "./tile-picker.js";
-import { BoardWalker } from "./board-walker.js";
-import { TileMatcher } from "./tile-matcher.js";
-import { TileMover } from "./tile-mover.js";
+import { GameTile } from "./GameTile.js";
+import { TilePicker } from "./TilePicker.js";
+import { BoardWalker } from "./BoardWalker.js";
+import { TileMatcher } from "./TileMatcher.js";
+import { TileMover } from "./TileMover.js";
 import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
-import { ComboMatchInfo } from "./combo-match-info.js";
+import { MatchInfoCombo } from "./MatchInfoCombo.js";
 
 export class GameArena {
   /** @type {string} */
@@ -139,12 +139,12 @@ export class GameArena {
     const matchInfo2 = this.#matcher.detectMatchXY(this.#picker.secondTile);
 
     return matchInfo1 || matchInfo2
-      ? new ComboMatchInfo(matchInfo1, matchInfo2)
+      ? new MatchInfoCombo(matchInfo1, matchInfo2)
       : null;
   }
 
   /**
-   * @param {ComboMatchInfo} matchInfo
+   * @param {MatchInfoCombo} matchInfo
    */
   #handleUserSuccessSelection(matchInfo) {
     this.#picker.resetUserSelection();
@@ -159,7 +159,7 @@ export class GameArena {
   }
 
   /**
-   * @param {ComboMatchInfo} matchInfo
+   * @param {MatchInfoCombo} matchInfo
    */
   #markMatchedTiles(matchInfo) {
     matchInfo.allDomSorted.forEach((tile) => tile.setMatched());

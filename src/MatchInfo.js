@@ -1,4 +1,4 @@
-import { MatchInfoBase } from "./match-info-base.js";
+import { MatchInfoBase } from "./MatchInfoBase.js";
 
 export class MatchInfo extends MatchInfoBase {
   arrX;
