@@ -1,23 +1,30 @@
-import { extendFromArrayIndexOf } from "./utilities.js";
+import { extendFromArrayIndexOf, sleep } from "./utilities.js";
 
 export class TileMover {
   #rows;
   #cols;
   #elemTiles;
   #walker;
+  #timerInterval;
 
   /**
    * @param {number} rows
    * @param {number} cols
    * @param {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} tileElements
    * @param {BoardWalker} walker
+   * @param {number} timerInterval
    */
-  constructor(rows, cols, tileElements, walker) {
+  constructor(rows, cols, tileElements, walker, timerInterval) {
     this.#rows = rows;
     this.#cols = cols;
     this.#elemTiles = tileElements;
     this.#walker = walker;
+    this.#timerInterval = timerInterval;
     extendFromArrayIndexOf(tileElements);
+  }
+
+  get #actionDelay() {
+    return this.#timerInterval;
   }
 
   /**
@@ -43,7 +50,7 @@ export class TileMover {
    * @param {ComboMatchInfo} matchFixture
    * @returns {GameTile[]}
    */
-  bubbleMatchToTopEdge(matchFixture) {
+  async bubbleMatchToTopEdge(matchFixture) {
     // TODO: this is on possibility to drive how bubbling takes place
     // TODO: and feed the animation.
 
@@ -58,7 +65,7 @@ export class TileMover {
     const collapsedTiles = new Set();
 
     while (fixtureRaw.size) {
-      fixtureRaw.forEach((tileBubbling) => {
+      for (const tileBubbling of fixtureRaw) {
         const idxMatchTile = this.#elemTiles.indexOf(tileBubbling);
 
         const tileFalling = this.#tryGetFallingTile(idxMatchTile);
@@ -69,7 +76,8 @@ export class TileMover {
         } else {
           fixtureRaw.delete(tileBubbling);
         }
-      });
+      }
+      await sleep(this.#actionDelay / 10);
     }
 
     return collapsedTiles;

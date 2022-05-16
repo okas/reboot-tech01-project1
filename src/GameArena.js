@@ -5,6 +5,7 @@ import { TileMatcher } from "./TileMatcher.js";
 import { TileMover } from "./TileMover.js";
 import { extendFromArrayIndexOf, rangeGenerator, sleep } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
+import { MatchInfoBase } from "./MatchInfoBase.js";
 
 export class GameArena {
   /** @type {string} */
@@ -35,6 +36,8 @@ export class GameArena {
   #matcher;
   /** @type {TileMover} */
   #mover;
+  /** @type {number} */
+  #tileCounter;
 
   constructor({
     canvasId = "canvasId",
@@ -51,6 +54,8 @@ export class GameArena {
     this.#cols = cols;
     this.#timerId = null;
 
+    this.#tileCounter = 0;
+
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
@@ -66,7 +71,9 @@ export class GameArena {
 
   #resetCanvas() {
     this.#resetCanvasLayout();
-    this.#elemCanvas.replaceChildren(...this.#createBoard());
+    this.#elemCanvas.replaceChildren(
+      ...this.#tileFactory(this.#rows * this.#cols)
+    );
     this.#elemTiles = this.#elemCanvas.children;
     extendFromArrayIndexOf(this.#elemTiles);
     this.#initTools();
@@ -80,8 +87,15 @@ export class GameArena {
     this.#elemCanvas.style.gridTemplateColumns = newValue;
   }
 
-  *#createBoard() {
-    for (const k of rangeGenerator(this.#rows * this.#cols, 1)) {
+  /**
+   * @param {number} amount
+   */
+  *#tileFactory(amount) {
+    for (const k of rangeGenerator(
+      this.#tileCounter + amount,
+      ++this.#tileCounter
+    )) {
+      this.#tileCounter = k;
       yield this.#createTile(this.#getRandomTileKey(), k);
     }
   }
@@ -110,7 +124,8 @@ export class GameArena {
       this.#rows,
       this.#cols,
       this.#elemTiles,
-      this.#walker
+      this.#walker,
+      this.#actionDelay
     );
   }
 
@@ -152,22 +167,48 @@ export class GameArena {
   /**
    * @param {MatchInfoCombo} matchInfo
    */
-  #handleUserSuccessSelection(matchInfo) {
+  async #handleUserSuccessSelection(matchInfo) {
     this.#picker.resetUserSelection();
-    this.#matchCollapseRecursive(matchInfo);
+    const { matches } = await this.#matchCollapseRecursive(matchInfo);
+    // TODO handle collapsed tiles status clearing.
+
+    await this.#generateNewTiles(matches);
+
+    // TODO: should start recursion somewhere here,
+    // cause filling canvas with tiles must init new match -> collapse - LOOP.
+  }
+
+  /**
+   * Generate new life here....
+   * @param {MatchInfoCombo[]} allMatchesData
+   */
+  async #generateNewTiles(allMatchesData) {
+    const allFlatMatchTiles = allMatchesData
+      .flatMap(({ allDomSorted }) => allDomSorted)
+      .sort(MatchInfoBase.domSortAsc);
+
+    console.debug(allFlatMatchTiles);
+
+    const newTileGen = this.#tileFactory(allFlatMatchTiles.length);
+
+    for await (const oldTile of allFlatMatchTiles) {
+      oldTile.replaceWith(newTileGen.next().value);
+      await sleep(this.#actionDelay / 6);
+    }
   }
 
   /**
    * @param {MatchInfoCombo} matchInfo
+   * @return {Promise<{matches: MatchInfoCombo[], collapses: GameTile[][]}>}
    */
   async #matchCollapseRecursive(matchInfo) {
-    this.#markMatchedTiles(matchInfo);
-    await sleep(this.#actionDelay);
+    await this.#markMatchedTiles(matchInfo);
+    await sleep(this.#actionDelay / 1.6);
 
     const preBubbleSnap = [...matchInfo.takeSnapShot()];
     console.debug("before: ", preBubbleSnap);
 
-    const collapsedStack = this.#mover.bubbleMatchToTopEdge(matchInfo);
+    const collapsedStack = await this.#mover.bubbleMatchToTopEdge(matchInfo);
 
     this.#markCollapsedTiles(collapsedStack);
 
@@ -179,8 +220,6 @@ export class GameArena {
     // if (!MatchInfoBase.compareSnapshots(preBubbleSnap, postBubbleSnap)) {
 
     // }
-
-    await sleep(this.#actionDelay);
 
     const newMatchesAfterCollapse = this.#tryFindMatches(...collapsedStack);
 
@@ -216,8 +255,11 @@ export class GameArena {
   /**
    * @param {MatchInfoCombo} matchInfo
    */
-  #markMatchedTiles(matchInfo) {
-    matchInfo.allDomSorted.forEach((tile) => tile.setMatched());
+  async #markMatchedTiles(matchInfo) {
+    for await (const tile of matchInfo.allDomSorted) {
+      tile.setMatched();
+      await sleep(this.#actionDelay / 6);
+    }
   }
 
   /**
