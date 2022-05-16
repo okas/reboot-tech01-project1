@@ -43,4 +43,17 @@ export class MatchInfoBase {
         this.#elemTiles.indexOf(currentSorted[i - 1]);
     }
   }
+
+  /**
+   * @param {number[]} snap1
+   * @param {number[]} snap2
+   * @returns `true`, if snapshot are with same length, and diff values are equal in the order of array's.
+   */
+  static compareSnapshots(snap1, snap2) {
+    if (snap1?.length !== snap2?.length) {
+      return false;
+    }
+
+    return snap1.every((diff, i) => diff === snap2[i]);
+  }
 }

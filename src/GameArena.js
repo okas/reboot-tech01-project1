@@ -5,6 +5,7 @@ import { TileMatcher } from "./TileMatcher.js";
 import { TileMover } from "./TileMover.js";
 import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
+import { MatchInfoBase } from "./MatchInfoBase.js";
 
 export class GameArena {
   /** @type {string} */
@@ -160,6 +161,12 @@ export class GameArena {
 
     const postBubbleSnap = [...matchInfo.takeSnapShot()];
     console.log("after: ", postBubbleSnap);
+
+    console.log(
+      "Is stack shape changed?: ",
+      !MatchInfoBase.compareSnapshots(preBubbleSnap, postBubbleSnap)
+    );
+
     // TODO: reset stack, if cycle is done!
     // TODO: reset match, if cycle is done!
   }
