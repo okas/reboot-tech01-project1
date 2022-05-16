@@ -3,7 +3,7 @@ import { TilePicker } from "./TilePicker.js";
 import { BoardWalker } from "./BoardWalker.js";
 import { TileMatcher } from "./TileMatcher.js";
 import { TileMover } from "./TileMover.js";
-import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
+import { extendFromArrayIndexOf, rangeGenerator, sleep } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
 
 export class GameArena {
@@ -54,6 +54,10 @@ export class GameArena {
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
+  }
+
+  get #actionDelay() {
+    return this.#timerInterval;
   }
 
   #initDOM() {
@@ -113,7 +117,7 @@ export class GameArena {
   /**
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
-  #tileClickHandler({ target: clickedTile }) {
+  async #tileClickHandler({ target: clickedTile }) {
     const intendedSwapDirection =
       this.#picker.manageAndValidateSelection(clickedTile);
     console.debug(intendedSwapDirection);
@@ -128,6 +132,7 @@ export class GameArena {
     console.debug(matchFixture);
 
     if (matchFixture) {
+      await sleep(this.#actionDelay);
       this.#handleUserSuccessSelection(matchFixture);
 
       // TODO: reset stack, if cycle is done!
@@ -155,8 +160,9 @@ export class GameArena {
   /**
    * @param {MatchInfoCombo} matchInfo
    */
-  #matchCollapseRecursive(matchInfo) {
+  async #matchCollapseRecursive(matchInfo) {
     this.#markMatchedTiles(matchInfo);
+    await sleep(this.#actionDelay);
 
     const preBubbleSnap = [...matchInfo.takeSnapShot()];
     console.debug("before: ", preBubbleSnap);
@@ -174,10 +180,14 @@ export class GameArena {
 
     // }
 
+    await sleep(this.#actionDelay);
+
     const newMatchesAfterCollapse = this.#tryFindMatches(...collapsedStack);
 
     if (newMatchesAfterCollapse) {
-      const result = this.#matchCollapseRecursive(newMatchesAfterCollapse);
+      const result = await this.#matchCollapseRecursive(
+        newMatchesAfterCollapse
+      );
       result.matches.push(matchInfo);
       result.collapses.push(collapsedStack);
 
@@ -217,12 +227,10 @@ export class GameArena {
     collapsedStack.forEach((tile) => tile.setCollapsed());
   }
 
-  #handleUserBadSelection() {
-    const id = setTimeout(() => {
-      clearTimeout(id);
-      this.#swapUserSelectedTiles();
-      this.#picker.resetUserSelection();
-    }, this.#badSwapTimeout);
+  async #handleUserBadSelection() {
+    await sleep(this.#badSwapTimeout);
+    this.#swapUserSelectedTiles();
+    this.#picker.resetUserSelection();
   }
 
   #swapUserSelectedTiles() {
