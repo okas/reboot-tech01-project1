@@ -4,9 +4,6 @@ export class MatchInfoCombo extends MatchInfoBase {
   /** @type {MatchInfo[]} */
   #combo;
 
-  /** @type {Set<GameTile>} */
-  #all;
-
   /**
    * @param {MatchInfo[]} args
    */

@@ -1,4 +1,5 @@
 export class MatchInfoBase {
+  /** @type {Set<GameTile>} */
   #all;
 
   /**

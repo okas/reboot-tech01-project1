@@ -4,9 +4,6 @@ export class MatchInfo extends MatchInfoBase {
   arrX;
   arrY;
 
-  /** @type {Set<GameTile>} */
-  #all;
-
   /**
    * @param {GameTile[]|null} arrX
    * @param {GameTile[]|null} arrY
