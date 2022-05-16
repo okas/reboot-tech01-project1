@@ -11,20 +11,19 @@ export class ComboMatchInfo {
    * @param {MatchInfo[]} args
    */
   constructor(...args) {
+    // To ensure non-null matches and also protects from outside changes
     this.#combo = args.filter((m) => m);
   }
 
+  /**
+   * Ordered by DOM position!
+   * Ordering feels intuitive for usage predictability,
+   * but is essential for matched tile bubbling control.
+   */
   get allDomSorted() {
-    return (this.#all ??= this.#allToSortedSet());
-  }
+    this.#all ??= new Set([...this._allCombiner()]);
 
-  #allToSortedSet() {
-    /** @type {GameTile[]} */
-    const all = [...this._allCombiner()];
-
-    all.sort(MatchInfoBase.domSortAsc);
-
-    return new Set(all);
+    return [...this.#all].sort(MatchInfoBase.domSortAsc);
   }
 
   *_allCombiner() {

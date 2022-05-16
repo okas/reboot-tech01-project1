@@ -12,8 +12,9 @@ export class MatchInfo {
    * @param {GameTile[]|null} arrY
    */
   constructor(arrX, arrY) {
-    this.arrX = arrX;
-    this.arrY = arrY;
+    // To protect form outside changes.
+    this.arrX = [...(arrX ?? [])];
+    this.arrY = [...(arrY ?? [])];
   }
 
   /**
@@ -22,26 +23,16 @@ export class MatchInfo {
    * but is essential for matched tile bubbling control.
    */
   get allDomSorted() {
-    return (this.#all ??= this.#allToSortedSet());
-  }
+    this.#all ??= new Set([...this._allCombiner()]);
 
-  /**
-   * @returns {Set<GameTile>}
-   */
-  #allToSortedSet() {
-    /** @type {Node[]} */
-    const all = [...this._allCombiner()];
-
-    all.sort(MatchInfoBase.domSortAsc);
-
-    return new Set(all);
+    return [...this.#all].sort(MatchInfoBase.domSortAsc);
   }
 
   *_allCombiner() {
-    for (const tile of this.arrX ?? []) {
+    for (const tile of this.arrX) {
       yield tile;
     }
-    for (const tile of this.arrY ?? []) {
+    for (const tile of this.arrY) {
       yield tile;
     }
   }
