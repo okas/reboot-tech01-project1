@@ -57,8 +57,12 @@ export class GameTile extends HTMLDivElement {
     return this.classList.contains("target");
   }
 
-  get isHidden() {
+  get isMatched() {
     return this.classList.contains("hidden");
+  }
+
+  get isCollapsed() {
+    return this.classList.contains("collapsed");
   }
 
   setPicked() {
@@ -81,13 +85,23 @@ export class GameTile extends HTMLDivElement {
     return this;
   }
 
-  setHidden() {
+  setMatched() {
     this.classList.add("hidden");
     return this;
   }
 
-  unSetHidden() {
+  unSetMatched() {
     this.classList.remove("hidden");
+    return this;
+  }
+
+  setCollapsed() {
+    this.classList.add("collapsed");
+    return this;
+  }
+
+  unSetCollapsed() {
+    this.classList.remove("collapsed");
     return this;
   }
 

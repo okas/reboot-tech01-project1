@@ -1,4 +1,4 @@
-import { GameArena } from "./game-arena.js";
+import { GameArena } from "./GameArena.js";
 
 // Game bootstrapping
 // eslint-disable-next-line no-unused-vars

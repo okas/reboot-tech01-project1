@@ -1,10 +1,10 @@
-import { GameTile } from "./game-tile.js";
-import { TilePicker } from "./tile-picker.js";
-import { BoardWalker } from "./board-walker.js";
-import { TileMatcher } from "./tile-matcher.js";
-import { TileMover } from "./tile-mover.js";
-import { extendFromArrayIndexOf, rangeGenerator } from "./utilities.js";
-import { ComboMatchInfo } from "./combo-match-info.js";
+import { GameTile } from "./GameTile.js";
+import { TilePicker } from "./TilePicker.js";
+import { BoardWalker } from "./BoardWalker.js";
+import { TileMatcher } from "./TileMatcher.js";
+import { TileMover } from "./TileMover.js";
+import { extendFromArrayIndexOf, rangeGenerator, sleep } from "./utilities.js";
+import { MatchInfoCombo } from "./MatchInfoCombo.js";
 
 export class GameArena {
   /** @type {string} */
@@ -54,6 +54,10 @@ export class GameArena {
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
+  }
+
+  get #actionDelay() {
+    return this.#timerInterval;
   }
 
   #initDOM() {
@@ -113,7 +117,7 @@ export class GameArena {
   /**
    * @param  {Event & {target: GameTile}} {clickedTile}
    */
-  #tileClickHandler({ target: clickedTile }) {
+  async #tileClickHandler({ target: clickedTile }) {
     const intendedSwapDirection =
       this.#picker.manageAndValidateSelection(clickedTile);
     console.debug(intendedSwapDirection);
@@ -124,47 +128,109 @@ export class GameArena {
 
     this.#swapUserSelectedTiles();
 
-    const matchFixture = this.#calculateMatchByUserSelection();
+    const matchFixture = this.#tryFindMatchesByUserSelection();
     console.debug(matchFixture);
 
     if (matchFixture) {
+      await sleep(this.#actionDelay);
       this.#handleUserSuccessSelection(matchFixture);
+
+      // TODO: reset stack, if cycle is done!
+      // TODO: reset match, if cycle is done!
     } else {
       this.#handleUserBadSelection();
     }
   }
 
-  #calculateMatchByUserSelection() {
-    const matchInfo1 = this.#matcher.detectMatchXY(this.#picker.firstTile);
-    const matchInfo2 = this.#matcher.detectMatchXY(this.#picker.secondTile);
+  #tryFindMatchesByUserSelection() {
+    return this.#tryFindMatches(
+      this.#picker.firstTile,
+      this.#picker.secondTile
+    );
+  }
 
-    return matchInfo1 || matchInfo2
-      ? new ComboMatchInfo(matchInfo1, matchInfo2)
+  /**
+   * @param {MatchInfoCombo} matchInfo
+   */
+  #handleUserSuccessSelection(matchInfo) {
+    this.#picker.resetUserSelection();
+    this.#matchCollapseRecursive(matchInfo);
+  }
+
+  /**
+   * @param {MatchInfoCombo} matchInfo
+   */
+  async #matchCollapseRecursive(matchInfo) {
+    this.#markMatchedTiles(matchInfo);
+    await sleep(this.#actionDelay);
+
+    const preBubbleSnap = [...matchInfo.takeSnapShot()];
+    console.debug("before: ", preBubbleSnap);
+
+    const collapsedStack = this.#mover.bubbleMatchToTopEdge(matchInfo);
+
+    this.#markCollapsedTiles(collapsedStack);
+
+    const postBubbleSnap = [...matchInfo.takeSnapShot()];
+    console.debug("after: ", postBubbleSnap);
+
+    // BUG: current match data snapshot do not reveal always the change in stack!
+    // TODO: Will turn off snapshot comparison for now, needs reiteration.
+    // if (!MatchInfoBase.compareSnapshots(preBubbleSnap, postBubbleSnap)) {
+
+    // }
+
+    await sleep(this.#actionDelay);
+
+    const newMatchesAfterCollapse = this.#tryFindMatches(...collapsedStack);
+
+    if (newMatchesAfterCollapse) {
+      const result = await this.#matchCollapseRecursive(
+        newMatchesAfterCollapse
+      );
+      result.matches.push(matchInfo);
+      result.collapses.push(collapsedStack);
+
+      return result;
+    }
+
+    return {
+      matches: [matchInfo],
+      collapses: [collapsedStack],
+    };
+  }
+
+  /**
+   * @param {GameTile[]} tilesToAnalyze
+   */
+  #tryFindMatches(...tilesToAnalyze) {
+    const matches = [...tilesToAnalyze]
+      .map((tile) => this.#matcher.detectMatchXY(tile))
+      .filter((m) => m);
+
+    return matches?.length
+      ? new MatchInfoCombo(this.#elemTiles, ...matches)
       : null;
   }
 
   /**
-   * @param {ComboMatchInfo} matchInfo
+   * @param {MatchInfoCombo} matchInfo
    */
-  #handleUserSuccessSelection(matchInfo) {
-    this.#picker.resetUserSelection();
-    this.#hideMatch(matchInfo);
-    this.#mover.bubbleMatchToTopEdge(matchInfo);
+  #markMatchedTiles(matchInfo) {
+    matchInfo.allDomSorted.forEach((tile) => tile.setMatched());
   }
 
   /**
-   * @param {ComboMatchInfo} matchInfo
+   * @param {GameTile[]} collapsedStack
    */
-  #hideMatch(matchInfo) {
-    matchInfo.domSortedTiles.forEach((tile) => tile.setHidden());
+  #markCollapsedTiles(collapsedStack) {
+    collapsedStack.forEach((tile) => tile.setCollapsed());
   }
 
-  #handleUserBadSelection() {
-    const id = setTimeout(() => {
-      clearTimeout(id);
-      this.#swapUserSelectedTiles();
-      this.#picker.resetUserSelection();
-    }, this.#badSwapTimeout);
+  async #handleUserBadSelection() {
+    await sleep(this.#badSwapTimeout);
+    this.#swapUserSelectedTiles();
+    this.#picker.resetUserSelection();
   }
 
   #swapUserSelectedTiles() {

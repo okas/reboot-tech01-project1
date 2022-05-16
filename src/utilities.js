@@ -3,7 +3,7 @@
  * @param {number} end
  * @param {number=} start
  * @param {number=} step
- * @see https://www.30secondsofcode.org/articles/s/javascript-range-generator
+ * @see {@link [Source](https://www.30secondsofcode.org/articles/s/javascript-range-generator)}
  */
 export function rangeGenerator(end, start = 0, step = 1) {
   function* generateRange() {
@@ -22,4 +22,14 @@ export function rangeGenerator(end, start = 0, step = 1) {
  */
 export function extendFromArrayIndexOf(obj) {
   return (obj.indexOf ??= Array.prototype.indexOf);
+}
+
+/**
+ * Non-blocking sleep. Using with await can give synchronous programing style, if preferred.
+ * @param {number} ms Time in ms to wait.
+
+ * @see {@link [Source](https://stackoverflow.com/a/39914235/876902)}
+ */
+export function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -1,5 +1,5 @@
 import { extendFromArrayIndexOf } from "./utilities.js";
-import { MatchInfo } from "./match-info.js";
+import { MatchInfo } from "./MatchInfo.js";
 
 export class TileMatcher {
   #rows;
@@ -77,7 +77,7 @@ export class TileMatcher {
         : null;
 
     return matchX?.length >= 3 || matchY?.length >= 3
-      ? new MatchInfo(matchX, matchY)
+      ? new MatchInfo(this.#elemTiles, matchX, matchY)
       : null;
   }
 
@@ -122,7 +122,7 @@ export class TileMatcher {
    * @param {GameTile} testTile
    * @param {number} pickedTileType
    */
-  #isInMatch({ isHidden, type }, pickedTileType) {
-    return !isHidden && type === pickedTileType;
+  #isInMatch({ isMatched, type }, pickedTileType) {
+    return !isMatched && type === pickedTileType;
   }
 }
