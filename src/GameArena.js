@@ -35,6 +35,8 @@ export class GameArena {
   #matcher;
   /** @type {TileMover} */
   #mover;
+  /** @type {number} */
+  #tileCounter;
 
   constructor({
     canvasId = "canvasId",
@@ -51,6 +53,8 @@ export class GameArena {
     this.#cols = cols;
     this.#timerId = null;
 
+    this.#tileCounter = 0;
+
     this.#initDOM();
     this.#resetCanvas();
     this.#resetCanvasLayout();
@@ -66,7 +70,9 @@ export class GameArena {
 
   #resetCanvas() {
     this.#resetCanvasLayout();
-    this.#elemCanvas.replaceChildren(...this.#createBoard());
+    this.#elemCanvas.replaceChildren(
+      ...this.#tileFactory(this.#rows * this.#cols)
+    );
     this.#elemTiles = this.#elemCanvas.children;
     extendFromArrayIndexOf(this.#elemTiles);
     this.#initTools();
@@ -80,8 +86,15 @@ export class GameArena {
     this.#elemCanvas.style.gridTemplateColumns = newValue;
   }
 
-  *#createBoard() {
-    for (const k of rangeGenerator(this.#rows * this.#cols, 1)) {
+  /**
+   * @param {number} amount
+   */
+  *#tileFactory(amount) {
+    for (const k of rangeGenerator(
+      this.#tileCounter + amount,
+      ++this.#tileCounter
+    )) {
+      this.#tileCounter = k;
       yield this.#createTile(this.#getRandomTileKey(), k);
     }
   }
