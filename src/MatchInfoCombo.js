@@ -5,10 +5,11 @@ export class MatchInfoCombo extends MatchInfoBase {
   #combo;
 
   /**
+   * @param {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} elemTiles
    * @param {MatchInfo[]} args
    */
-  constructor(...args) {
-    super();
+  constructor(elemTiles, ...args) {
+    super(elemTiles);
     // To ensure non-null matches and also protects from outside changes
     this.#combo = args.filter((m) => m);
   }

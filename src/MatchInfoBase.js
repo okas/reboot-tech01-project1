@@ -1,6 +1,16 @@
 export class MatchInfoBase {
+  #elemTiles;
+
   /** @type {Set<GameTile>} */
   #all;
+
+  /**
+   *
+   * @param {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} elemTiles
+   */
+  constructor(elemTiles) {
+    this.#elemTiles = elemTiles;
+  }
 
   /**
    * Used HTML DOM Node api to compare
@@ -21,8 +31,16 @@ export class MatchInfoBase {
    * but is essential for matched tile bubbling control.
    */
   get allDomSorted() {
-    this.#all ??= new Set([...this._allCombiner()]);
+    this.#all ??= new Set(this._allCombiner());
 
     return [...this.#all].sort(MatchInfoBase.domSortAsc);
+  }
+
+  *takeSnapShot() {
+    const currentSorted = this.allDomSorted;
+    for (let i = 1; i < this.#all.size; i++) {
+      yield this.#elemTiles.indexOf(currentSorted[i]) -
+        this.#elemTiles.indexOf(currentSorted[i - 1]);
+    }
   }
 }

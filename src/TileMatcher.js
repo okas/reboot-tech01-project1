@@ -77,7 +77,7 @@ export class TileMatcher {
         : null;
 
     return matchX?.length >= 3 || matchY?.length >= 3
-      ? new MatchInfo(matchX, matchY)
+      ? new MatchInfo(this.#elemTiles, matchX, matchY)
       : null;
   }
 

@@ -139,7 +139,7 @@ export class GameArena {
     const matchInfo2 = this.#matcher.detectMatchXY(this.#picker.secondTile);
 
     return matchInfo1 || matchInfo2
-      ? new MatchInfoCombo(matchInfo1, matchInfo2)
+      ? new MatchInfoCombo(this.#elemTiles, matchInfo1, matchInfo2)
       : null;
   }
 
@@ -150,12 +150,12 @@ export class GameArena {
     this.#picker.resetUserSelection();
     this.#markMatchedTiles(matchInfo);
 
-    // const preBubbleSnap = matchInfo.takeSnapshot();
-    // console.log("before: ", preBubbleSnap);
+    const preBubbleSnap = [...matchInfo.takeSnapShot()];
+    console.log("before: ", preBubbleSnap);
 
     this.#mover.bubbleMatchToTopEdge(matchInfo);
-    // const postBubbleSnap = matchInfo.takeSnapshot();
-    // console.log("after: ", postBubbleSnap);
+    const postBubbleSnap = [...matchInfo.takeSnapShot()];
+    console.log("after: ", postBubbleSnap);
   }
 
   /**

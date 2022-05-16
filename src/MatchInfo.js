@@ -5,11 +5,12 @@ export class MatchInfo extends MatchInfoBase {
   arrY;
 
   /**
+   * @param {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} elemTiles
    * @param {GameTile[]|null} arrX
    * @param {GameTile[]|null} arrY
    */
-  constructor(arrX, arrY) {
-    super();
+  constructor(elemTiles, arrX, arrY) {
+    super(elemTiles);
     // To protect form outside changes.
     this.arrX = [...(arrX ?? [])];
     this.arrY = [...(arrY ?? [])];
