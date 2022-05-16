@@ -169,31 +169,26 @@ export class GameArena {
    */
   async #handleUserSuccessSelection(matchInfo) {
     this.#picker.resetUserSelection();
-    const { matches } = await this.#matchCollapseRecursive(matchInfo);
-    // TODO handle collapsed tiles status clearing.
 
-    await this.#generateNewTiles(matches);
-
-    // TODO: should start recursion somewhere here,
-    // cause filling canvas with tiles must init new match -> collapse - LOOP.
+    await this.#startMainRecursive(matchInfo);
+    console.debug("Done with series!");
   }
 
   /**
-   * Generate new life here....
-   * @param {MatchInfoCombo[]} allMatchesData
+   * @param {MatchInfoCombo} matchInfo
+   * @return {Promise<{matches: MatchInfoCombo[], collapses: GameTile[][]}>}
    */
-  async #generateNewTiles(allMatchesData) {
-    const allFlatMatchTiles = allMatchesData
-      .flatMap(({ allDomSorted }) => allDomSorted)
-      .sort(MatchInfoBase.domSortAsc);
+  async #startMainRecursive(matchInfo) {
+    const { matches } = await this.#matchCollapseRecursive(matchInfo);
+    // TODO handle collapsed tiles status clearing.
 
-    console.debug(allFlatMatchTiles);
+    const newTiles = await this.#generateNewTiles(matches);
 
-    const newTileGen = this.#tileFactory(allFlatMatchTiles.length);
+    const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
-    for await (const oldTile of allFlatMatchTiles) {
-      oldTile.replaceWith(newTileGen.next().value);
-      await sleep(this.#actionDelay / 6);
+    if (matchInfoOfNewTiles) {
+      console.debug("New tiles generates matches, working them through now...");
+      await this.#startMainRecursive(matchInfoOfNewTiles);
     }
   }
 
@@ -205,21 +200,9 @@ export class GameArena {
     await this.#markMatchedTiles(matchInfo);
     await sleep(this.#actionDelay / 1.6);
 
-    const preBubbleSnap = [...matchInfo.takeSnapShot()];
-    console.debug("before: ", preBubbleSnap);
-
     const collapsedStack = await this.#mover.bubbleMatchToTopEdge(matchInfo);
 
     this.#markCollapsedTiles(collapsedStack);
-
-    const postBubbleSnap = [...matchInfo.takeSnapShot()];
-    console.debug("after: ", postBubbleSnap);
-
-    // BUG: current match data snapshot do not reveal always the change in stack!
-    // TODO: Will turn off snapshot comparison for now, needs reiteration.
-    // if (!MatchInfoBase.compareSnapshots(preBubbleSnap, postBubbleSnap)) {
-
-    // }
 
     const newMatchesAfterCollapse = this.#tryFindMatches(...collapsedStack);
 
@@ -267,6 +250,32 @@ export class GameArena {
    */
   #markCollapsedTiles(collapsedStack) {
     collapsedStack.forEach((tile) => tile.setCollapsed());
+  }
+
+  /**
+   * Generate tiles and replace, thy replace matched tiles, that are now bubbled up.
+   * @param {MatchInfoCombo[]} allMatchesData
+   * @return {Promise<GameTile[]>}
+   */
+  async #generateNewTiles(allMatchesData) {
+    const allFlatMatchTiles = allMatchesData
+      .flatMap(({ allDomSorted }) => allDomSorted)
+      .sort(MatchInfoBase.domSortAsc);
+
+    console.debug(allFlatMatchTiles);
+
+    const newTileGen = this.#tileFactory(allFlatMatchTiles.length);
+
+    const result = [];
+
+    for await (const oldTile of allFlatMatchTiles) {
+      const newTile = newTileGen.next().value;
+      oldTile.replaceWith(newTile);
+      result.push(newTile);
+      await sleep(this.#actionDelay / 6);
+    }
+
+    return result;
   }
 
   async #handleUserBadSelection() {
