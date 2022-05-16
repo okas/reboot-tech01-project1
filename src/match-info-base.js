@@ -1,4 +1,6 @@
 export class MatchInfoBase {
+  #all;
+
   /**
    * Used HTML DOM Node api to compare
    * @param {Node} a The Node to evaluate against other node.
@@ -10,5 +12,16 @@ export class MatchInfoBase {
     return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_PRECEDING
       ? 1
       : -1;
+  }
+
+  /**
+   * Ordered by DOM position!
+   * Ordering feels intuitive for usage predictability,
+   * but is essential for matched tile bubbling control.
+   */
+  get allDomSorted() {
+    this.#all ??= new Set([...this._allCombiner()]);
+
+    return [...this.#all].sort(MatchInfoBase.domSortAsc);
   }
 }
