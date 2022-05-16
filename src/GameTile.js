@@ -61,6 +61,10 @@ export class GameTile extends HTMLDivElement {
     return this.classList.contains("hidden");
   }
 
+  get isCollapsed() {
+    return this.classList.contains("collapsed");
+  }
+
   setPicked() {
     this.classList.add("picked");
     return this;
@@ -88,6 +92,16 @@ export class GameTile extends HTMLDivElement {
 
   unSetMatched() {
     this.classList.remove("hidden");
+    return this;
+  }
+
+  setCollapsed() {
+    this.classList.add("hidden");
+    return this;
+  }
+
+  unSetCollapsed() {
+    this.classList.remove("collapsed");
     return this;
   }
 

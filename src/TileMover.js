@@ -41,6 +41,7 @@ export class TileMover {
 
   /**
    * @param {ComboMatchInfo} matchFixture
+   * @returns {GameTile[]}
    */
   bubbleMatchToTopEdge(matchFixture) {
     // TODO: this is on possibility to drive how bubbling takes place
@@ -50,6 +51,8 @@ export class TileMover {
     // that are reached it's destination.
     const fixtureRaw = new Set(matchFixture.allDomSorted);
 
+    const collapsedTiles = [];
+
     while (fixtureRaw.size) {
       fixtureRaw.forEach((tileBubbling) => {
         const idxMatchTile = this.#elemTiles.indexOf(tileBubbling);
@@ -57,16 +60,20 @@ export class TileMover {
         const tileFalling = this.#tryGetFallingTile(idxMatchTile);
 
         if (tileFalling) {
+          collapsedTiles.push(tileFalling);
           this.swapTiles(tileBubbling, tileFalling);
         } else {
           fixtureRaw.delete(tileBubbling);
         }
       });
     }
+
+    return collapsedTiles;
   }
 
   /**
    * @param {number} indexMatchedTile
+   * @returns {GameTile}
    */
   #tryGetFallingTile(indexMatchedTile) {
     if (this.#walker.detectEdgeUp(indexMatchedTile)) {

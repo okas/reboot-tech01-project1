@@ -148,14 +148,20 @@ export class GameArena {
    */
   #handleUserSuccessSelection(matchInfo) {
     this.#picker.resetUserSelection();
+
     this.#markMatchedTiles(matchInfo);
 
     const preBubbleSnap = [...matchInfo.takeSnapShot()];
     console.log("before: ", preBubbleSnap);
 
-    this.#mover.bubbleMatchToTopEdge(matchInfo);
+    const collapsedStack = this.#mover.bubbleMatchToTopEdge(matchInfo);
+
+    this.#markCollapsedTiles(collapsedStack);
+
     const postBubbleSnap = [...matchInfo.takeSnapShot()];
     console.log("after: ", postBubbleSnap);
+    // TODO: reset stack, if cycle is done!
+    // TODO: reset match, if cycle is done!
   }
 
   /**
@@ -163,6 +169,13 @@ export class GameArena {
    */
   #markMatchedTiles(matchInfo) {
     matchInfo.allDomSorted.forEach((tile) => tile.setMatched());
+  }
+
+  /**
+   * @param {GameTile[]} collapsedStack
+   */
+  #markCollapsedTiles(collapsedStack) {
+    collapsedStack.forEach((tile) => tile.setCollapsed());
   }
 
   #handleUserBadSelection() {
