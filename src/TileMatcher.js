@@ -10,6 +10,8 @@ export class TileMatcher {
   /** @type {Map<string, [Function, Function]>} */
   #matchSeekHelpersMap;
 
+  #directions;
+
   /**
    * @param {number} rows
    * @param {number} cols
@@ -21,41 +23,11 @@ export class TileMatcher {
     this.#cols = cols;
     this.#elemTiles = tileElements;
     this.#walker = walker;
+
+    this.#directions = ["left", "up", "right", "down"];
+
     extendFromArrayIndexOf(tileElements);
     this.#setupMatchDirectionalActions();
-  }
-
-  #setupMatchDirectionalActions() {
-    this.#matchSeekHelpersMap = new Map([
-      [
-        "left",
-        [
-          this.#walker.detectEdgeLeft.bind(this.#walker),
-          this.#walker.getIndexToLeft.bind(this.#walker),
-        ],
-      ],
-      [
-        "up",
-        [
-          this.#walker.detectEdgeUp.bind(this.#walker),
-          this.#walker.getIndexToUp.bind(this.#walker),
-        ],
-      ],
-      [
-        "right",
-        [
-          this.#walker.detectEdgeRight.bind(this.#walker),
-          this.#walker.getIndexToRight.bind(this.#walker),
-        ],
-      ],
-      [
-        "down",
-        [
-          this.#walker.detectEdgeDown.bind(this.#walker),
-          this.#walker.getIndexToDown.bind(this.#walker),
-        ],
-      ],
-    ]);
   }
 
   /**
@@ -63,7 +35,7 @@ export class TileMatcher {
    * @param {GameTile} tileToAnalyze
    * @returns {MatchInfo} Analyzed tile is included in every or either axe.
    */
-  detectMatchXY(tileToAnalyze) {
+  tryCaptureMatch(tileToAnalyze) {
     const raw = this.#obtainDirectionalMatchInfo(tileToAnalyze);
 
     const matchX = [...(raw.left ?? []), tileToAnalyze, ...(raw.right ?? [])];
@@ -79,7 +51,7 @@ export class TileMatcher {
     const pickedTileType = tileToAnalyze.type;
     const idxSeek = this.#elemTiles.indexOf(tileToAnalyze);
 
-    return ["left", "up", "right", "down"].reduce((acc, dir) => {
+    return this.#directions.reduce((acc, dir) => {
       acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
       return acc;
     }, {});
@@ -118,5 +90,38 @@ export class TileMatcher {
    */
   #isInMatch({ isMatched, type }, pickedTileType) {
     return !isMatched && type === pickedTileType;
+  }
+
+  #setupMatchDirectionalActions() {
+    this.#matchSeekHelpersMap = new Map([
+      [
+        "left",
+        [
+          this.#walker.detectEdgeLeft.bind(this.#walker),
+          this.#walker.getIndexToLeft.bind(this.#walker),
+        ],
+      ],
+      [
+        "up",
+        [
+          this.#walker.detectEdgeUp.bind(this.#walker),
+          this.#walker.getIndexToUp.bind(this.#walker),
+        ],
+      ],
+      [
+        "right",
+        [
+          this.#walker.detectEdgeRight.bind(this.#walker),
+          this.#walker.getIndexToRight.bind(this.#walker),
+        ],
+      ],
+      [
+        "down",
+        [
+          this.#walker.detectEdgeDown.bind(this.#walker),
+          this.#walker.getIndexToDown.bind(this.#walker),
+        ],
+      ],
+    ]);
   }
 }

@@ -198,8 +198,6 @@ export class GameArena {
     const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
-    this.#clearTileEventHandlers(bubbledMatches);
-
     if (matchInfoOfNewTiles) {
       console.debug(
         " -> New tiles generated matches, working them through now..."
@@ -210,10 +208,10 @@ export class GameArena {
 
   /**
    * @param {MatchInfoCombo} matchInfo
-   * @return {Promise< MatchInfoCombo[]>}
+   * @return {Promise<MatchInfoCombo[]>}
    */
   async #matchCollapseRecursive(matchInfo) {
-    await this.#markMatchedTiles(matchInfo);
+    await this.#sanitizeMatchedTiles(matchInfo);
     await sleep(this.#actionDelay / 1.6);
 
     const collapsedStack = await this.#mover.bubbleMatchToTopEdge(matchInfo);
@@ -238,7 +236,7 @@ export class GameArena {
    */
   #tryFindMatches(...tilesToAnalyze) {
     const matches = [...tilesToAnalyze]
-      .map((tile) => this.#matcher.detectMatchXY(tile))
+      .map((tile) => this.#matcher.tryCaptureMatch(tile))
       .filter((m) => m);
 
     return matches?.length
@@ -249,9 +247,9 @@ export class GameArena {
   /**
    * @param {MatchInfoCombo} matchInfo
    */
-  async #markMatchedTiles(matchInfo) {
-    for await (const tile of matchInfo.allDomSorted) {
-      tile.setMatched();
+  async #sanitizeMatchedTiles(matchInfo) {
+    for await (const tile of matchInfo.all) {
+      tile.setMatched().onclick = null;
       await sleep(this.#actionDelay / 6);
     }
   }
@@ -276,14 +274,13 @@ export class GameArena {
    */
   #flattenExhaustedMatches(allMatchesData) {
     return allMatchesData
-      .flatMap(({ allDomSorted }) => allDomSorted)
+      .flatMap(({ all }) => all)
       .sort(MatchInfoBase.domSortAsc);
   }
 
   /**
    * Generate tiles and replace matched tiles, that are now bubbled up.
    * @param {GameTile[]} allMatchesData
-   * @return {Promise<GameTile[]>}
    */
   async #generateNewTiles(allMatchesData) {
     const newTileGenerator = this.#tileFactory(allMatchesData.length);
@@ -291,6 +288,7 @@ export class GameArena {
     const result = [];
 
     for await (const oldTile of allMatchesData) {
+      /** @type {GameTile} */
       const newTile = newTileGenerator.next().value;
       oldTile.replaceWith(newTile);
       result.push(newTile);
@@ -298,13 +296,6 @@ export class GameArena {
     }
 
     return result;
-  }
-
-  /**
-   * @param {GameTile[]} exhaustedMatches
-   */
-  #clearTileEventHandlers(exhaustedMatches) {
-    exhaustedMatches.forEach((t) => (t.onclick = null));
   }
 
   async #handleUserBadSelection() {

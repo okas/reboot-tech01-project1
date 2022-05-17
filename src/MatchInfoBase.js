@@ -1,7 +1,7 @@
 export class MatchInfoBase {
   #elemTiles;
 
-  /** @type {Set<GameTile>} */
+  /** @type {GameTile[]} */
   #all;
 
   /**
@@ -25,20 +25,22 @@ export class MatchInfoBase {
       : -1;
   }
 
+  get all() {
+    return (this.#all ??= [...new Set(this._allCombiner())]);
+  }
+
   /**
    * Ordered by DOM position!
    * Ordering feels intuitive for usage predictability,
    * but is essential for matched tile bubbling control.
    */
   get allDomSorted() {
-    this.#all ??= new Set(this._allCombiner());
-
-    return [...this.#all].sort(MatchInfoBase.domSortAsc);
+    return [...this.all].sort(MatchInfoBase.domSortAsc);
   }
 
   *takeSnapShot() {
     const currentSorted = this.allDomSorted;
-    for (let i = 1; i < this.#all.size; i++) {
+    for (let i = 1; i < this.all.size; i++) {
       yield this.#elemTiles.indexOf(currentSorted[i]) -
         this.#elemTiles.indexOf(currentSorted[i - 1]);
     }
