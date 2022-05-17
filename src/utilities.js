@@ -21,7 +21,9 @@ export function rangeGenerator(end, start = 0, step = 1) {
  * @returns {{} & {Array<any>.indexOf(searchElement: any, fromIndex?: number): number}}
  */
 export function extendFromArrayIndexOf(obj) {
-  return (obj.indexOf ??= Array.prototype.indexOf);
+  obj.indexOf ??= Array.prototype.indexOf;
+
+  return obj;
 }
 
 /**
