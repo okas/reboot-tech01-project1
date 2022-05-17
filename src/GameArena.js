@@ -198,7 +198,7 @@ export class GameArena {
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
     if (matchInfoOfNewTiles) {
-      console.debug("New tiles generates matches, working them through now...");
+      console.debug("New tiles generated matches, working them through now...");
       await this.#startMainRecursive(matchInfoOfNewTiles);
     }
   }
@@ -266,7 +266,7 @@ export class GameArena {
   }
 
   /**
-   * Generate tiles and replace, thy replace matched tiles, that are now bubbled up.
+   * Generate tiles and replace matched tiles, that are now bubbled up.
    * @param {MatchInfoCombo[]} allMatchesData
    * @return {Promise<GameTile[]>}
    */
