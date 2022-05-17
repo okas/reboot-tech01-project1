@@ -232,12 +232,26 @@ export class GameArena {
   }
 
   /**
+   * Tries to get matches for a given set of files.
+   * Has check to exclude already matched tiles from re-analyze.
    * @param {GameTile[]} tilesToAnalyze
    */
   #tryFindMatches(...tilesToAnalyze) {
-    const matches = [...tilesToAnalyze]
-      .map((tile) => this.#matcher.tryCaptureMatch(tile))
-      .filter((m) => m);
+    const checkBag = new Set();
+    const matches = [];
+
+    for (const tile of tilesToAnalyze) {
+      if (checkBag.has(tile)) {
+        continue;
+      }
+
+      const match = this.#matcher.tryCaptureMatch(tile);
+
+      if (match) {
+        matches.push(match);
+        match.all.forEach((m) => checkBag.add(m));
+      }
+    }
 
     return matches?.length
       ? new MatchInfoCombo(this.#elemTiles, ...matches)
