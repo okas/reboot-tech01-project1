@@ -184,7 +184,7 @@ export class GameArena {
     await sleep(this.#actionDelay);
     this.#picker.resetUserSelection();
     await this.#startMainRecursive(matchInfo);
-    console.debug("Done with matching series!");
+    console.debug("Done with matching series!\n   ..--=/=--..\n");
   }
 
   /**
@@ -201,7 +201,9 @@ export class GameArena {
     this.#clearTileEventHandlers(bubbledMatches);
 
     if (matchInfoOfNewTiles) {
-      console.debug("New tiles generated matches, working them through now...");
+      console.debug(
+        " -> New tiles generated matches, working them through now..."
+      );
       await this.#startMainRecursive(matchInfoOfNewTiles);
     }
   }
