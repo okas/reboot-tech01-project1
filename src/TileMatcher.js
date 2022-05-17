@@ -94,7 +94,7 @@ export class TileMatcher {
     const [edgeDetectOnDirectionFn, indexToDirectionFn] =
       this.#matchSeekHelpersMap.get(direction);
 
-    // Detect edge on given direction, proceed, if no on the edge yet.
+    // Detect edge on given direction, proceed, if not on the edge yet.
     while (!edgeDetectOnDirectionFn(seekIndex)) {
       // Move seek index to given direction.
       seekIndex = indexToDirectionFn(seekIndex);

@@ -78,6 +78,7 @@ export class TileMover {
           fixtureRaw.delete(tileBubbling);
         }
       }
+
       await sleep(this.#actionDelay / 10);
     }
 

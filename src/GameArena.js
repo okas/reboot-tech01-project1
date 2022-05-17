@@ -7,20 +7,21 @@ import { extendFromArrayIndexOf, rangeGenerator, sleep } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
 import { MatchInfoBase } from "./MatchInfoBase.js";
 
+/**
+ * @typedef {Object} Config
+ * @property {string} canvasId
+ * @property {number} rows
+ * @property {number} cols
+ * @property {number} badSwapTimeout Allows to control timing when to switch back user bar selection.
+ * @property {number} timerInterval Main interval of cycle in game.
+ *                    Various places in program use own coefficient, to be relates to this value.
+ */
+
 export class GameArena {
-  /** @type {string} */
   #canvasId;
-  /** @type {number} */
   #rows;
-  /** @type {number} */
   #cols;
-
-  /** @type {number} */
-  #timerId;
-  /** @type {number} */
   #timerInterval;
-
-  /** @type {number} */
   #badSwapTimeout;
 
   /** @type {HTMLElement} */
@@ -39,6 +40,9 @@ export class GameArena {
   /** @type {number} */
   #tileCounter;
 
+  /**
+   * @param {Config}
+   */
   constructor({
     canvasId = "canvasId",
     rows = 7,
@@ -52,7 +56,6 @@ export class GameArena {
 
     this.#rows = rows;
     this.#cols = cols;
-    this.#timerId = null;
 
     this.#tileCounter = 0;
 
@@ -76,7 +79,7 @@ export class GameArena {
     );
     this.#elemTiles = this.#elemCanvas.children;
 
-    extendFromArrayIndexOf(this.#elemTiles);
+    this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
 
     this.#initTools();
   }
@@ -176,7 +179,7 @@ export class GameArena {
 
   /**
    * @param {MatchInfoCombo} matchInfo
-   * @return {Promise<MatchInfoCombo[]}>}
+   * @return {Promise<MatchInfoCombo[]>}
    */
   async #startMainRecursive(matchInfo) {
     const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
@@ -192,7 +195,7 @@ export class GameArena {
 
   /**
    * @param {MatchInfoCombo} matchInfo
-   * @return {Promise< MatchInfoCombo[]}>}
+   * @return {Promise< MatchInfoCombo[]>}
    */
   async #matchCollapseRecursive(matchInfo) {
     await this.#markMatchedTiles(matchInfo);
