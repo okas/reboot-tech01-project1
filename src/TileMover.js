@@ -48,7 +48,7 @@ export class TileMover {
   }
 
   /**
-   * @param {ComboMatchInfo} matchFixture
+   * @param {MatchInfoCombo} matchFixture
    * @returns {GameTile[]}
    */
   async bubbleMatchToTopEdge(matchFixture) {
