@@ -135,9 +135,19 @@ export class GameArena {
   }
 
   /**
-   * @param  {Event & {target: GameTile}} {clickedTile}
+   * @param  {Event : {target}} {clickedTile}
    */
-  async #tileClickHandler({ target: clickedTile }) {
+  async #tileClickHandler({ target }) {
+    this.#disableCanvas();
+    this.#performGameMove(target);
+    this.#enableCanvas();
+  }
+
+  /**
+   * Main vector for user to react with game.
+   * @param {GameTile} clickedTile
+   */
+  #performGameMove(clickedTile) {
     const intendedSwapDirection = this.#picker.analyzeSelection(clickedTile);
 
     if (!intendedSwapDirection) {
@@ -294,5 +304,13 @@ export class GameArena {
     }
 
     this.#mover.swapTiles(this.#picker.firstTile, this.#picker.secondTile);
+  }
+
+  #enableCanvas() {
+    this.#elemCanvas.style.pointerEvents = "auto";
+  }
+
+  #disableCanvas() {
+    this.#elemCanvas.style.pointerEvents = "none";
   }
 }
