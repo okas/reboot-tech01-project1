@@ -181,9 +181,11 @@ export class GameArena {
    */
   async #handleUserSuccessSelection(matchInfo) {
     console.debug("User have selected matching tiles.");
+
     await sleep(this.#actionDelay);
     this.#picker.resetUserSelection();
     await this.#startMainRecursive(matchInfo);
+
     console.debug("Done with matching series!\n   ..--=/=--..\n");
   }
 
@@ -194,7 +196,7 @@ export class GameArena {
   async #startMainRecursive(matchInfo) {
     const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
 
-    const flattened = this.#flattenExhaustedMatches(bubbledMatches);
+    const flattened = this.#flattenDomSortedExhaustedMatches(bubbledMatches);
     const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
@@ -286,7 +288,7 @@ export class GameArena {
    * @param {MatchInfoCombo[]} allMatchesData
    * @returns {GameTile[]}
    */
-  #flattenExhaustedMatches(allMatchesData) {
+  #flattenDomSortedExhaustedMatches(allMatchesData) {
     return allMatchesData
       .flatMap(({ all }) => all)
       .sort(MatchInfoBase.domSortAsc);
