@@ -194,8 +194,11 @@ export class GameArena {
   async #startMainRecursive(matchInfo) {
     const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
 
-    const newTiles = await this.#generateNewTiles(bubbledMatches);
+    const flattened = this.#flattenExhaustedMatches(bubbledMatches);
+    const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
+
+    this.#clearTileEventHandlers(bubbledMatches);
 
     if (matchInfoOfNewTiles) {
       console.debug("New tiles generated matches, working them through now...");
@@ -266,27 +269,40 @@ export class GameArena {
   }
 
   /**
-   * Generate tiles and replace matched tiles, that are now bubbled up.
    * @param {MatchInfoCombo[]} allMatchesData
+   * @returns {GameTile[]}
+   */
+  #flattenExhaustedMatches(allMatchesData) {
+    return allMatchesData
+      .flatMap(({ allDomSorted }) => allDomSorted)
+      .sort(MatchInfoBase.domSortAsc);
+  }
+
+  /**
+   * Generate tiles and replace matched tiles, that are now bubbled up.
+   * @param {GameTile[]} allMatchesData
    * @return {Promise<GameTile[]>}
    */
   async #generateNewTiles(allMatchesData) {
-    const allFlatMatchTiles = allMatchesData
-      .flatMap(({ allDomSorted }) => allDomSorted)
-      .sort(MatchInfoBase.domSortAsc);
-
-    const newTileGen = this.#tileFactory(allFlatMatchTiles.length);
+    const newTileGenerator = this.#tileFactory(allMatchesData.length);
 
     const result = [];
 
-    for await (const oldTile of allFlatMatchTiles) {
-      const newTile = newTileGen.next().value;
+    for await (const oldTile of allMatchesData) {
+      const newTile = newTileGenerator.next().value;
       oldTile.replaceWith(newTile);
       result.push(newTile);
       await sleep(this.#actionDelay / 6);
     }
 
     return result;
+  }
+
+  /**
+   * @param {GameTile[]} exhaustedMatches
+   */
+  #clearTileEventHandlers(exhaustedMatches) {
+    exhaustedMatches.forEach((t) => (t.onclick = null));
   }
 
   async #handleUserBadSelection() {
