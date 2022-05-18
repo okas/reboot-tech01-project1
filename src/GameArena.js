@@ -115,7 +115,12 @@ export class GameArena {
   }
 
   #createTile(tileKey, id) {
-    const tile = new GameTile({ id, type: tileKey, worth: 1, leverage: 1.25 });
+    const tile = new GameTile({
+      id: id - 1,
+      type: tileKey,
+      worth: 1,
+      leverage: 1.25,
+    });
     tile.onclick = this.#tileClickHandler.bind(this);
 
     return tile;
@@ -251,8 +256,17 @@ export class GameArena {
   }
 
   #countChances() {
-    const count = this.#chancer1.chances1Count();
-    console.log(" --> TYPE1 new matches count: ", count);
+    const count1 = this.#chancer1.chances1Count();
+    const count2 = this.#chancer1.chances2Count();
+    console.log(" --> TYPE1 chances count: ", count1);
+    console.log(" --> TYPE2 chances count: ", count2);
+    console.log(
+      " --> TOTAL chances count: ",
+      [
+        ...Object.entries(count1).map(([, val]) => val),
+        ...Object.entries(count2).map(([, val]) => val),
+      ].reduce((acc, val) => (acc += val))
+    );
   }
 
   /**

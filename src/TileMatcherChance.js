@@ -6,6 +6,7 @@ export class TileMatcherChance extends TileMatcherBase {
   #cols;
   #elemTiles;
   #walker;
+  #totalTileCount;
 
   /**
    * @param {number} rows
@@ -17,6 +18,7 @@ export class TileMatcherChance extends TileMatcherBase {
     super(walker);
     this.#rows = rows;
     this.#cols = cols;
+    this.totalTileCount = rows * cols;
     this.#elemTiles = tileElements;
     this.#walker = walker;
 
@@ -24,12 +26,10 @@ export class TileMatcherChance extends TileMatcherBase {
   }
 
   chances1Count() {
-    const totalTiles = this.#rows * this.#cols;
-
     let chcCountX = 0;
     let chcCountY = 0;
 
-    for (let i = 0; i < totalTiles; i++) {
+    for (let i = 0; i < this.totalTileCount; i++) {
       // Tile that is the start of potential seq.
       const { type } = this.#elemTiles[i];
 
@@ -75,13 +75,7 @@ export class TileMatcherChance extends TileMatcherBase {
       }
     }
 
-    for (
-      let i = 0;
-      i < totalTiles;
-      this.#walker.detectEdgeDown(++i)
-        ? this.#walker.getIndexToDown(i)
-        : this.#walker.getIndexToUp(i)
-    ) {
+    for (let i = 0; i < this.totalTileCount; i++) {
       // Tile that is the start of potential seq.
       const { type } = this.#elemTiles[i];
 
@@ -109,7 +103,7 @@ export class TileMatcherChance extends TileMatcherBase {
             auxesU.map((a) => [a, ...sequenceY])
           );
 
-          console.log("/");
+          // console.log("/");
         }
 
         if (auxesD.length) {
@@ -120,8 +114,38 @@ export class TileMatcherChance extends TileMatcherBase {
             `  -> found ${chcCountY}-th chcY, DW: `,
             auxesD.map((a) => [a, ...sequenceY])
           );
-          console.log("/");
+          // console.log("/");
         }
+      }
+    }
+
+    return { countX: chcCountX, countY: chcCountY };
+  }
+
+  chances2Count() {
+    // By start going to "left", capture tile
+    // make 2 steps to given direction to detect sequence with hole
+
+    let chcCountX = 0;
+    let chcCountY = 0;
+
+    for (let i = 0; i < this.totalTileCount; i++) {
+      const { type } = this.#elemTiles[i];
+      const fixture = [i, ...this.#seekChance2Auxes(i, "right", "left", type)];
+
+      if (fixture.length >= 3) {
+        chcCountX++;
+        console.log(" --> TYPE2 fixture on X: ", fixture);
+      }
+    }
+
+    for (let i = 0; i < this.totalTileCount; i++) {
+      const { type } = this.#elemTiles[i];
+      const fixture = [i, ...this.#seekChance2Auxes(i, "down", "up", type)];
+
+      if (fixture.length >= 3) {
+        chcCountY++;
+        console.log(" --> TYPE2 fixture on Y: ", fixture);
       }
     }
 
@@ -174,6 +198,64 @@ export class TileMatcherChance extends TileMatcherBase {
         // elements type to sequence type.
         const idxAux = getIndexToDirectionFn(idxLookAround);
         if (this.#elemTiles[idxAux].type === seekType) {
+          yield idxAux;
+        }
+      }
+    }
+  }
+
+  *#seekChance2Auxes(seqStartIndex, direction, excludedDirection, seekType) {
+    // Retrieve helpers to check sequence own element position.
+    const [detectEdgeOfSeqEndFn, getIndexToDirectionFn] =
+      this.seekHelperMap.get(direction);
+    // If seq. element is on the edge already, then quit early.
+    if (detectEdgeOfSeqEndFn(seqStartIndex)) {
+      return;
+    }
+    // Seq. not on the edge -- advance on step towards overall analyze direction.
+    // This will be the index we want to look around on some directions!
+    const idxHole = getIndexToDirectionFn(seqStartIndex);
+
+    // If "hole" index is on the edge, then it won't provide a chance -- quit.
+    if (detectEdgeOfSeqEndFn(idxHole)) {
+      return;
+    }
+
+    // If "hole" is of same type, then this is normal seq,
+    //  a work work of for different -- quit.
+    if (this.#elemTiles[idxHole].type === seekType) {
+      return;
+    }
+
+    // Get the index, of the sequence, the other end of the "hole"
+    const indexSeqEndIndex = getIndexToDirectionFn(idxHole);
+
+    if (this.#elemTiles[indexSeqEndIndex].type === seekType) {
+      yield indexSeqEndIndex;
+    } else {
+      return;
+    }
+
+    // Get auxilliar pieces possible locations, excluding some.
+    const seekDirections = TileMatcherBase.directions.filter(
+      (d) => d !== excludedDirection && d !== direction
+    );
+    // Iterate all possible auxiliary element positions around the "lookaround element"
+    for (const dir of seekDirections) {
+      // Retrieve helpers for given direction to seek for.
+      const [detectEdgeFn, getIndexToDirectionFn] = this.seekHelperMap.get(dir);
+
+      // If on given direction, "lookaround" element is on the edge,
+      // it is impossible to advance to this direction.
+      if (!detectEdgeFn(idxHole)) {
+        // If it is possible to advance toward given direction,
+        // then analyze type to conclude chance, by comparing auxillary
+        // elements type to sequence type.
+        const idxAux = getIndexToDirectionFn(idxHole);
+        const { type } = this.#elemTiles[idxAux];
+
+        // If direction is different than heading than it is auxilliar -- chance possibility.
+        if (type === seekType) {
           yield idxAux;
         }
       }
