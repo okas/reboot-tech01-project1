@@ -6,6 +6,7 @@ import { TileMover } from "./TileMover.js";
 import { extendFromArrayIndexOf, rangeGenerator, sleep } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
 import { MatchInfoBase } from "./MatchInfoBase.js";
+import { TileMatcherChance } from "./TileMatcherChance.js";
 
 /**
  * @typedef {Object} Config
@@ -35,6 +36,8 @@ export class GameArena {
   #walker;
   /** @type {TileMatcher} */
   #matcher;
+  /** @type {TileMatcherChance} */
+  #chancer1;
   /** @type {TileMover} */
   #mover;
   /** @type {number} */
@@ -82,6 +85,8 @@ export class GameArena {
     this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
 
     this.#initTools();
+
+    this.#countChances();
   }
 
   #resetCanvasLayout() {
@@ -119,6 +124,12 @@ export class GameArena {
   #initTools() {
     this.#walker = new BoardWalker(this.#rows, this.#cols);
     this.#matcher = new TileMatcher(
+      this.#rows,
+      this.#cols,
+      this.#elemTiles,
+      this.#walker
+    );
+    this.#chancer1 = new TileMatcherChance(
       this.#rows,
       this.#cols,
       this.#elemTiles,
@@ -200,7 +211,9 @@ export class GameArena {
     const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
-    if (matchInfoOfNewTiles) {
+    if (!matchInfoOfNewTiles) {
+      console.log(this.#isGameOver());
+    } else {
       console.debug(
         " -> New tiles generated matches, working them through now..."
       );
@@ -231,6 +244,15 @@ export class GameArena {
     result.push(matchInfo);
 
     return result;
+  }
+
+  #isGameOver() {
+    this.#countChances();
+  }
+
+  #countChances() {
+    const count = this.#chancer1.chances1Count();
+    console.log(" --> TYPE1 new matches count: ", count);
   }
 
   /**

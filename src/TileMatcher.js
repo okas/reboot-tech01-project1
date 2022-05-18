@@ -1,16 +1,12 @@
+import { TileMatcherBase } from "./TileMatcherBase.js";
 import { extendFromArrayIndexOf } from "./utilities.js";
 import { MatchInfo } from "./MatchInfo.js";
 
-export class TileMatcher {
+export class TileMatcher extends TileMatcherBase {
   #rows;
   #cols;
   #elemTiles;
   #walker;
-
-  /** @type {Map<string, [Function, Function]>} */
-  #matchSeekHelpersMap;
-
-  #directions;
 
   /**
    * @param {number} rows
@@ -19,15 +15,13 @@ export class TileMatcher {
    * @param {BoardWalker} walker
    */
   constructor(rows, cols, tileElements, walker) {
+    super(walker);
     this.#rows = rows;
     this.#cols = cols;
     this.#elemTiles = tileElements;
     this.#walker = walker;
 
-    this.#directions = ["left", "up", "right", "down"];
-
     extendFromArrayIndexOf(tileElements);
-    this.#setupMatchDirectionalActions();
   }
 
   /**
@@ -51,7 +45,7 @@ export class TileMatcher {
     const pickedTileType = tileToAnalyze.type;
     const idxSeek = this.#elemTiles.indexOf(tileToAnalyze);
 
-    return this.#directions.reduce((acc, dir) => {
+    return TileMatcherBase.directions.reduce((acc, dir) => {
       acc[dir] = [...this.#seekInDirection(dir, pickedTileType, idxSeek)];
       return acc;
     }, {});
@@ -64,7 +58,7 @@ export class TileMatcher {
    */
   *#seekInDirection(direction, pickedTileType, seekIndex) {
     const [edgeDetectOnDirectionFn, indexToDirectionFn] =
-      this.#matchSeekHelpersMap.get(direction);
+      this.seekHelperMap.get(direction);
 
     // Detect edge on given direction, proceed, if not on the edge yet.
     while (!edgeDetectOnDirectionFn(seekIndex)) {
@@ -90,38 +84,5 @@ export class TileMatcher {
    */
   #isInMatch({ isMatched, type }, pickedTileType) {
     return !isMatched && type === pickedTileType;
-  }
-
-  #setupMatchDirectionalActions() {
-    this.#matchSeekHelpersMap = new Map([
-      [
-        "left",
-        [
-          this.#walker.detectEdgeLeft.bind(this.#walker),
-          this.#walker.getIndexToLeft.bind(this.#walker),
-        ],
-      ],
-      [
-        "up",
-        [
-          this.#walker.detectEdgeUp.bind(this.#walker),
-          this.#walker.getIndexToUp.bind(this.#walker),
-        ],
-      ],
-      [
-        "right",
-        [
-          this.#walker.detectEdgeRight.bind(this.#walker),
-          this.#walker.getIndexToRight.bind(this.#walker),
-        ],
-      ],
-      [
-        "down",
-        [
-          this.#walker.detectEdgeDown.bind(this.#walker),
-          this.#walker.getIndexToDown.bind(this.#walker),
-        ],
-      ],
-    ]);
   }
 }
