@@ -6,6 +6,7 @@ import { TileMover } from "./TileMover.js";
 import { extendFromArrayIndexOf, rangeGenerator, sleep } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
 import { MatchInfoBase } from "./MatchInfoBase.js";
+import { TileMatcherChance } from "./TileMatcherChance.js";
 
 /**
  * @typedef {Object} Config
@@ -35,6 +36,8 @@ export class GameArena {
   #walker;
   /** @type {TileMatcher} */
   #matcher;
+  /** @type {TileMatcherChance} */
+  #chancer1;
   /** @type {TileMover} */
   #mover;
   /** @type {number} */
@@ -82,6 +85,8 @@ export class GameArena {
     this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
 
     this.#initTools();
+
+    this.#countChances();
   }
 
   #resetCanvasLayout() {
@@ -110,7 +115,12 @@ export class GameArena {
   }
 
   #createTile(tileKey, id) {
-    const tile = new GameTile({ id, type: tileKey, worth: 1, leverage: 1.25 });
+    const tile = new GameTile({
+      id: id - 1,
+      type: tileKey,
+      worth: 1,
+      leverage: 1.25,
+    });
     tile.onclick = this.#tileClickHandler.bind(this);
 
     return tile;
@@ -119,6 +129,12 @@ export class GameArena {
   #initTools() {
     this.#walker = new BoardWalker(this.#rows, this.#cols);
     this.#matcher = new TileMatcher(
+      this.#rows,
+      this.#cols,
+      this.#elemTiles,
+      this.#walker
+    );
+    this.#chancer1 = new TileMatcherChance(
       this.#rows,
       this.#cols,
       this.#elemTiles,
@@ -181,9 +197,11 @@ export class GameArena {
    */
   async #handleUserSuccessSelection(matchInfo) {
     console.debug("User have selected matching tiles.");
+
     await sleep(this.#actionDelay);
     this.#picker.resetUserSelection();
     await this.#startMainRecursive(matchInfo);
+
     console.debug("Done with matching series!\n   ..--=/=--..\n");
   }
 
@@ -194,13 +212,13 @@ export class GameArena {
   async #startMainRecursive(matchInfo) {
     const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
 
-    const flattened = this.#flattenExhaustedMatches(bubbledMatches);
+    const flattened = this.#flattenDomSortedExhaustedMatches(bubbledMatches);
     const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
-    this.#clearTileEventHandlers(bubbledMatches);
-
-    if (matchInfoOfNewTiles) {
+    if (!matchInfoOfNewTiles) {
+      console.log(this.#isGameOver());
+    } else {
       console.debug(
         " -> New tiles generated matches, working them through now..."
       );
@@ -210,10 +228,10 @@ export class GameArena {
 
   /**
    * @param {MatchInfoCombo} matchInfo
-   * @return {Promise< MatchInfoCombo[]>}
+   * @return {Promise<MatchInfoCombo[]>}
    */
   async #matchCollapseRecursive(matchInfo) {
-    await this.#markMatchedTiles(matchInfo);
+    await this.#sanitizeMatchedTiles(matchInfo);
     await sleep(this.#actionDelay / 1.6);
 
     const collapsedStack = await this.#mover.bubbleMatchToTopEdge(matchInfo);
@@ -233,13 +251,45 @@ export class GameArena {
     return result;
   }
 
+  #isGameOver() {
+    this.#countChances();
+  }
+
+  #countChances() {
+    const count1 = this.#chancer1.chances1Count();
+    const count2 = this.#chancer1.chances2Count();
+    console.log(" --> TYPE1 chances count: ", count1);
+    console.log(" --> TYPE2 chances count: ", count2);
+    console.log(
+      " --> TOTAL chances count: ",
+      [
+        ...Object.entries(count1).map(([, val]) => val),
+        ...Object.entries(count2).map(([, val]) => val),
+      ].reduce((acc, val) => (acc += val))
+    );
+  }
+
   /**
+   * Tries to get matches for a given set of files.
+   * Has check to exclude already matched tiles from re-analyze.
    * @param {GameTile[]} tilesToAnalyze
    */
   #tryFindMatches(...tilesToAnalyze) {
-    const matches = [...tilesToAnalyze]
-      .map((tile) => this.#matcher.detectMatchXY(tile))
-      .filter((m) => m);
+    const checkBag = new Set();
+    const matches = [];
+
+    for (const tile of tilesToAnalyze) {
+      if (checkBag.has(tile)) {
+        continue;
+      }
+
+      const match = this.#matcher.tryCaptureMatch(tile);
+
+      if (match) {
+        matches.push(match);
+        match.all.forEach((m) => checkBag.add(m));
+      }
+    }
 
     return matches?.length
       ? new MatchInfoCombo(this.#elemTiles, ...matches)
@@ -249,9 +299,9 @@ export class GameArena {
   /**
    * @param {MatchInfoCombo} matchInfo
    */
-  async #markMatchedTiles(matchInfo) {
-    for await (const tile of matchInfo.allDomSorted) {
-      tile.setMatched();
+  async #sanitizeMatchedTiles(matchInfo) {
+    for await (const tile of matchInfo.all) {
+      tile.setMatched().onclick = null;
       await sleep(this.#actionDelay / 6);
     }
   }
@@ -274,16 +324,15 @@ export class GameArena {
    * @param {MatchInfoCombo[]} allMatchesData
    * @returns {GameTile[]}
    */
-  #flattenExhaustedMatches(allMatchesData) {
+  #flattenDomSortedExhaustedMatches(allMatchesData) {
     return allMatchesData
-      .flatMap(({ allDomSorted }) => allDomSorted)
+      .flatMap(({ all }) => all)
       .sort(MatchInfoBase.domSortAsc);
   }
 
   /**
    * Generate tiles and replace matched tiles, that are now bubbled up.
    * @param {GameTile[]} allMatchesData
-   * @return {Promise<GameTile[]>}
    */
   async #generateNewTiles(allMatchesData) {
     const newTileGenerator = this.#tileFactory(allMatchesData.length);
@@ -291,6 +340,7 @@ export class GameArena {
     const result = [];
 
     for await (const oldTile of allMatchesData) {
+      /** @type {GameTile} */
       const newTile = newTileGenerator.next().value;
       oldTile.replaceWith(newTile);
       result.push(newTile);
@@ -298,13 +348,6 @@ export class GameArena {
     }
 
     return result;
-  }
-
-  /**
-   * @param {GameTile[]} exhaustedMatches
-   */
-  #clearTileEventHandlers(exhaustedMatches) {
-    exhaustedMatches.forEach((t) => (t.onclick = null));
   }
 
   async #handleUserBadSelection() {

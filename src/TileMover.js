@@ -48,8 +48,8 @@ export class TileMover {
   }
 
   /**
-   * @param {ComboMatchInfo} matchFixture
-   * @returns {GameTile[]}
+   * @param {MatchInfoCombo} matchFixture
+   * @returns {Promise<GameTile[]>}
    */
   async bubbleMatchToTopEdge(matchFixture) {
     // TODO: this is on possibility to drive how bubbling takes place
@@ -82,7 +82,7 @@ export class TileMover {
       await sleep(this.#actionDelay / 10);
     }
 
-    return collapsedTiles;
+    return [...collapsedTiles];
   }
 
   /**
