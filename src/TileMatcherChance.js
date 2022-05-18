@@ -131,7 +131,7 @@ export class TileMatcherChance extends TileMatcherBase {
 
     for (let i = 0; i < this.totalTileCount; i++) {
       const { type } = this.#elemTiles[i];
-      const fixture = [i, ...this.#seekChance2Auxes(i, "right", "left", type)];
+      const fixture = [i, ...this.#seekChance2(i, "right", "left", type)];
 
       if (fixture.length >= 3) {
         chcCountX++;
@@ -141,7 +141,7 @@ export class TileMatcherChance extends TileMatcherBase {
 
     for (let i = 0; i < this.totalTileCount; i++) {
       const { type } = this.#elemTiles[i];
-      const fixture = [i, ...this.#seekChance2Auxes(i, "down", "up", type)];
+      const fixture = [i, ...this.#seekChance2(i, "down", "up", type)];
 
       if (fixture.length >= 3) {
         chcCountY++;
@@ -182,29 +182,17 @@ export class TileMatcherChance extends TileMatcherBase {
     // This will be the index we want to look around on some directions!
     const idxLookAround = getIndexToDirectionFn(seqEndIndex);
     // Get auxilliar pieces possible locations, excluding some.
-    const seekDirections = TileMatcherBase.directions.filter(
+
+    // Iterate all possible auxiliary element positions around the "lookAround element"
+
+    yield* this.#seekAuxes(
+      idxLookAround,
+      seekType,
       (d) => d !== excludedDirection
     );
-    // Iterate all possible auxiliary element positions around the "lookaround element"
-    for (const dir of seekDirections) {
-      // Retrieve helpers for given direction to seek for.
-      const [detectEdgeFn, getIndexToDirectionFn] = this.seekHelperMap.get(dir);
-
-      // If on given direction, "lookaround" element is on the edge,
-      // it is impossible to advance to this direction.
-      if (!detectEdgeFn(idxLookAround)) {
-        // If it is possible to advance toward given direction,
-        // then analyze type to conclude chance, by comparing auxillary
-        // elements type to sequence type.
-        const idxAux = getIndexToDirectionFn(idxLookAround);
-        if (this.#elemTiles[idxAux].type === seekType) {
-          yield idxAux;
-        }
-      }
-    }
   }
 
-  *#seekChance2Auxes(seqStartIndex, direction, excludedDirection, seekType) {
+  *#seekChance2(seqStartIndex, direction, excludedDirection, seekType) {
     // Retrieve helpers to check sequence own element position.
     const [detectEdgeOfSeqEndFn, getIndexToDirectionFn] =
       this.seekHelperMap.get(direction);
@@ -236,9 +224,17 @@ export class TileMatcherChance extends TileMatcherBase {
       return;
     }
 
+    yield* this.#seekAuxes(
+      idxHole,
+      seekType,
+      (d) => d !== excludedDirection && d !== direction
+    );
+  }
+
+  *#seekAuxes(idxLookAround, seekType, directionFilterPredicate) {
     // Get auxilliar pieces possible locations, excluding some.
     const seekDirections = TileMatcherBase.directions.filter(
-      (d) => d !== excludedDirection && d !== direction
+      directionFilterPredicate
     );
     // Iterate all possible auxiliary element positions around the "lookaround element"
     for (const dir of seekDirections) {
@@ -247,15 +243,14 @@ export class TileMatcherChance extends TileMatcherBase {
 
       // If on given direction, "lookaround" element is on the edge,
       // it is impossible to advance to this direction.
-      if (!detectEdgeFn(idxHole)) {
+      if (!detectEdgeFn(idxLookAround)) {
         // If it is possible to advance toward given direction,
         // then analyze type to conclude chance, by comparing auxillary
         // elements type to sequence type.
-        const idxAux = getIndexToDirectionFn(idxHole);
-        const { type } = this.#elemTiles[idxAux];
+        const idxAux = getIndexToDirectionFn(idxLookAround);
 
         // If direction is different than heading than it is auxilliar -- chance possibility.
-        if (type === seekType) {
+        if (this.#elemTiles[idxAux].type === seekType) {
           yield idxAux;
         }
       }
