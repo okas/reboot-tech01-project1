@@ -11,13 +11,13 @@ export class GameTile extends HTMLDivElement {
   #leverage;
 
   static #tileClassMap = new Map([
-    [1, "type-1"],
-    [2, "type-2"],
-    [3, "type-3"],
-    [4, "type-4"],
-    [5, "type-5"],
-    [6, "type-6"],
-    [7, "type-7"],
+    [1, "tile-jon"],
+    [2, "tile-tere"],
+    [3, "tile-brenda"],
+    [4, "tile-adrian"],
+    [5, "tile-yeray"],
+    [6, "tile-lauri"],
+    [7, "tile-lara"],
   ]);
 
   static get typeCount() {
@@ -35,6 +35,8 @@ export class GameTile extends HTMLDivElement {
     this.#worth = worth;
     this.#leverage = leverage;
     this.dataset.tileType = type;
+
+    this.#initChildren();
   }
 
   get type() {
@@ -105,8 +107,16 @@ export class GameTile extends HTMLDivElement {
     return this;
   }
 
-  connectedCallback() {
+  #initChildren() {
     this.classList.add(GameTile.#tileClassMap.get(this.#type));
+
+    const img = document.createElement("img");
+
+    img.id = `t_img_${this.id}`;
+    img.className = "tile-face sphere igradient00ffff ishine55 ishade";
+    img.src = `assets/tiles/${GameTile.#tileClassMap.get(this.#type)}.png`;
+
+    this.append(img);
   }
 }
 

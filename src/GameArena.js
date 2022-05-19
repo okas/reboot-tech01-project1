@@ -151,11 +151,12 @@ export class GameArena {
   }
 
   /**
-   * @param  {Event : {target}} {clickedTile}
+   * @param  {Event }
    */
-  async #tileClickHandler({ target }) {
+  async #tileClickHandler(event) {
+    event.stopPropagation();
     this.#disableCanvas();
-    this.#performGameMove(target);
+    this.#performGameMove(event.currentTarget);
     this.#enableCanvas();
   }
 

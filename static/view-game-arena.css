@@ -58,14 +58,14 @@ header {
 #game-canvas {
   grid-area: main;
   display: grid;
-  grid-template-columns: repeat(7, 60px);
+  grid-template-columns: repeat(7, 65px);
   grid-auto-flow: row;
   gap: 0.3rem;
 }
 
 #game-canvas > div {
-  height: 60px;
-  width: 60px;
+  height: 65px;
+  width: 65px;
   text-align: center;
   vertical-align: middle;
 }
