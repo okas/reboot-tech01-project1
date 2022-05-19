@@ -110,12 +110,10 @@ export class GameTile extends HTMLDivElement {
   #initChildren() {
     this.classList.add(GameTile.#tileClassMap.get(this.#type));
 
-    const spherePluginClasses = "sphere igradient00ffff ishine55 ishade";
-
     const img = document.createElement("img");
 
-    img.className = spherePluginClasses;
-    img.src = `./assets/tiles/${GameTile.#tileClassMap.get(this.#type)}.png`;
+    img.id = `t_img_${this.id}`;
+    img.className = "tile-face sphere igradient00ffff ishine55 ishade";
 
     this.append(img);
   }

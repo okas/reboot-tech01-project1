@@ -1,15 +1,21 @@
-[class^="tile-"] > img {
+.picked,
+.target,
+.tile-face {
+  border-radius: 50%;
+}
+
+.tile-face {
   height: 65px;
 }
 
 .picked {
-  outline: 0.5rem inset greenyellow;
-  outline-offset: -0.5rem;
+  /* outline-color: greenyellow; */
+  box-shadow: 0 0 3px 3px greenyellow;
 }
 
 .target {
-  outline: 0.5rem inset rgb(218 78 187);
-  outline-offset: -0.5rem;
+  /* outline-color: rgb(218 78 187); */
+  box-shadow: 0 0 3px 3px rgb(218 78 187);
 }
 
 .hidden {
