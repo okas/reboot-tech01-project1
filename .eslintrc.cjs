@@ -13,4 +13,5 @@ module.exports = {
   plugins: ["@typescript-eslint", "html"],
   rules: {},
   overrides: [],
+  ignorePatterns: ["lib/sphere.js/*"],
 };
