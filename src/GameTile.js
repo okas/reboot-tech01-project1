@@ -114,6 +114,7 @@ export class GameTile extends HTMLDivElement {
 
     img.id = `t_img_${this.id}`;
     img.className = "tile-face sphere igradient00ffff ishine55 ishade";
+    img.src = `assets/tiles/${GameTile.#tileClassMap.get(this.#type)}.png`;
 
     this.append(img);
   }
