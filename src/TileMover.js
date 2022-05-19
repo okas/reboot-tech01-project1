@@ -52,15 +52,8 @@ export class TileMover {
    * @returns {Promise<GameTile[]>}
    */
   async bubbleMatchToTopEdge(matchFixture) {
-    // TODO: this is on possibility to drive how bubbling takes place
-    // TODO: and feed the animation.
-
-    // TODO: Try hook-in stack snapshot **before** it's shape change here!
-    // Proposition: try to get the shape of the bottom of stack at least.
-    // OR: if there is situation of duplicates in collapsedTiles, is it solid indication?
-
-    // Copy, because bubbling track will be tracked by removing tiles,
-    // that are reached it's destination.
+    // Copy "raw" match material, to provide isolation, because all "lighter" tiles
+    // that are already bubbled up will be removed from set, hence the isolation is needed.
     const fixtureRaw = new Set(matchFixture.allDomSorted);
 
     const collapsedTiles = new Set();
@@ -87,7 +80,7 @@ export class TileMover {
 
   /**
    * @param {number} indexMatchedTile
-   * @returns {GameTile}
+   * @returns {GameTile|null}
    */
   #tryGetFallingTile(indexMatchedTile) {
     if (this.#walker.detectEdgeUp(indexMatchedTile)) {
@@ -98,6 +91,8 @@ export class TileMover {
       this.#walker.getIndexToUp(indexMatchedTile)
     );
 
+    // No point to drag "bubble", that has meet another "bubble",
+    // through the layer of bubbles.
     return tile.isMatched ? null : tile;
   }
 }
