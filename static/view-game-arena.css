@@ -88,10 +88,6 @@ header {
   grid-area: footer;
 }
 
-#view-game-arena-footer-image {
-  margin-top: -250px;
-}
-
 #view-game-arena-footer-image img {
-  max-width: 980px;
+  max-width: 500px;
 }
