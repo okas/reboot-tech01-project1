@@ -50,7 +50,7 @@ header {
   grid-template-rows: auto;
   grid-template-areas:
     "header header header"
-    "aside main ."
+    ". main ."
     "footer footer footer";
   row-gap: 4rem;
 }
@@ -88,10 +88,10 @@ header {
   grid-area: footer;
 }
 
-#footer-image {
-  margin-left: 170px;
+#view-game-arena-footer-image {
+  margin-top: -250px;
 }
 
-.footer-tiles-faces {
-  width: 400px;
+#view-game-arena-footer-image img {
+  max-width: 980px;
 }
