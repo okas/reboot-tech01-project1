@@ -9,6 +9,7 @@ export class GameTile extends HTMLDivElement {
   #type;
   #worth;
   #leverage;
+  #elemImg;
 
   static #tileClassMap = new Map([
     [1, "tile-jon"],
@@ -24,6 +25,15 @@ export class GameTile extends HTMLDivElement {
     return GameTile.#tileClassMap.size;
   }
 
+  static get cviSphereConf() {
+    return {
+      size: 65,
+      shine: 55,
+      color2: "00ffff",
+      shade: 105,
+    };
+  }
+
   /**
    * @param {Config}
    */
@@ -36,7 +46,7 @@ export class GameTile extends HTMLDivElement {
     this.#leverage = leverage;
     this.dataset.tileType = type;
 
-    this.#initChildren();
+    this.#createImage();
   }
 
   get type() {
@@ -107,13 +117,20 @@ export class GameTile extends HTMLDivElement {
     return this;
   }
 
-  #initChildren() {
+  connectedCallback() {
     this.classList.add(GameTile.#tileClassMap.get(this.#type));
 
+    // eslint-disable-next-line no-undef, camelcase
+    cvi_sphere.add(this.#elemImg, GameTile.cviSphereConf);
+  }
+
+  #createImage() {
     const img = document.createElement("img");
+    this.#elemImg = img;
 
     img.id = `t_img_${this.id}`;
-    img.className = "tile-face sphere igradient00ffff ishine55 ishade";
+
+    img.className = "tile-face";
     img.src = `assets/tiles/${GameTile.#tileClassMap.get(this.#type)}.png`;
 
     this.append(img);
