@@ -35,6 +35,8 @@ export class GameTile extends HTMLDivElement {
     this.#worth = worth;
     this.#leverage = leverage;
     this.dataset.tileType = type;
+
+    this.#initChildren();
   }
 
   get type() {
@@ -105,7 +107,7 @@ export class GameTile extends HTMLDivElement {
     return this;
   }
 
-  connectedCallback() {
+  #initChildren() {
     this.classList.add(GameTile.#tileClassMap.get(this.#type));
 
     const spherePluginClasses = "sphere igradient00ffff ishine55 ishade";
