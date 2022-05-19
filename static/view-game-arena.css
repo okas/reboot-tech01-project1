@@ -1,10 +1,10 @@
 * {
-  border: 1px solid rgb(0 255 60);
+  /* border: 1px solid rgb(0 255 60); */
 }
 
 body {
   /* ToDO: this must be dynamically changeable form JS! */
-  background-image: url("../assets/view-game-arena-theme-1.png");
+  background-image: url("../assets/theme-2/futuristic-retro-landscape-s-neon-colors-sun-mountains-style-digital-cyber-surface-vector-illustration-163569210.jpeg");
   background-position: top center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -66,7 +66,6 @@ header {
 #game-canvas > div {
   height: 60px;
   width: 60px;
-  border: 1px solid rgb(232 241 226);
   text-align: center;
   vertical-align: middle;
 }
@@ -90,7 +89,7 @@ header {
 }
 
 #footer-image {
-  margin-left: 180px;
+  margin-left: 170px;
 }
 
 .footer-tiles-faces {

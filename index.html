@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="static/site.css" />
     <link rel="stylesheet" href="static/view-game-arena.css" />
     <link rel="stylesheet" href="static/game-tile.css" />
+    <script
+      type="text/javascript"
+      src="./lib/sphere.js/cvi_sphere_lib.js"
+    ></script>
+    <script type="text/javascript" src="./lib/sphere.js/sphere.js"></script>
     <script type="module" src="./src/index.js"></script>
     <title>Reboot Crush, SAGA!</title>
   </head>
@@ -39,347 +44,348 @@
           </table>
         </aside>
         <main id="game-canvas">
-          <div lass="type-1">
+          <div class="glass-drop">
             <img
-              class="tile-jon"
+              class="sphere igradient00ffff ishine55 ishade tile-jon"
               src="./assets/tiles/tile-jon.png"
-              style="height: 60px"
+              style="height: 65px"
             />
+            <div class="overlay"></div>
           </div>
-          <div lass="type-2">
+          <div class="type-tere">
             <img
-              class="tile-tere"
+              class="sphere igradient00ffff ishine55 ishade tile-tere"
               src="./assets/tiles/tile-tere.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div lass="type-3">
+          <div class="type-brenda">
             <img
-              class="tile-brenda"
+              class="sphere igradient00ffff ishine55 ishade tile-brenda"
               src="./assets/tiles/tile-brenda.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div lass="type-4">
+          <div class="type-adrian">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div lass="type-5">
+          <div class="type-yeray">
             <img
-              class="tile-yeray"
+              class="sphere igradient00ffff ishine55 ishade tile-yeray"
               src="./assets/tiles/tile-yeray.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div lass="type-6">
+          <div class="type-lauri">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div lass="type-7">
+          <div class="type-lara">
             <img
-              class="tile-lara"
+              class="sphere igradient00ffff ishine55 ishade tile-lara"
               src="./assets/tiles/tile-lara.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div lass="type-8">
+          <div class="type-jon">
             <img
-              class="tile-jon"
+              class="sphere igradient00ffff ishine55 ishade tile-jon"
               src="./assets/tiles/tile-jon.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div lass="type-9">
+          <div class="type-lara">
             <img
-              class="tile-lara"
+              class="sphere igradient00ffff ishine55 ishade tile-lara"
               src="./assets/tiles/tile-lara.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-10">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
-          <div class="type-11">
+          <div class="type-">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-12">
             <img
-              class="tile-brenda"
+              class="sphere igradient00ffff ishine55 ishade tile-brenda"
               src="./assets/tiles/tile-brenda.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-13">
             <img
-              class="tile-brenda"
+              class="sphere igradient00ffff ishine55 ishade tile-brenda"
               src="./assets/tiles/tile-brenda.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-14">
             <img
-              class="tile-yeray"
+              class="sphere igradient00ffff ishine55 ishade tile-yeray"
               src="./assets/tiles/tile-yeray.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-15">
             <img
-              class="tile-yeray"
+              class="sphere igradient00ffff ishine55 ishade tile-yeray"
               src="./assets/tiles/tile-yeray.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-16">
             <img
-              class="tile-jon"
+              class="sphere igradient00ffff ishine55 ishade tile-jon"
               src="./assets/tiles/tile-jon.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-17">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-18">
             <img
-              class="tile-tere"
+              class="sphere igradient00ffff ishine55 ishade tile-tere"
               src="./assets/tiles/tile-tere.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-19">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-20">
             <img
-              class="tile-lara"
+              class="sphere igradient00ffff ishine55 ishade tile-lara"
               src="./assets/tiles/tile-lara.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-21">
             <img
-              class="tile-brenda"
+              class="sphere igradient00ffff ishine55 ishade tile-brenda"
               src="./assets/tiles/tile-brenda.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-22">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-23">
             <img
-              class="tile-lara"
+              class="sphere igradient00ffff ishine55 ishade tile-lara"
               src="./assets/tiles/tile-lara.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-24">
             <img
-              class="tile-tere"
+              class="sphere igradient00ffff ishine55 ishade tile-tere"
               src="./assets/tiles/tile-tere.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-25">
             <img
-              class="tile-yeray"
+              class="sphere igradient00ffff ishine55 ishade tile-yeray"
               src="./assets/tiles/tile-yeray.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-26">
             <img
-              class="tile-tere"
+              class="sphere igradient00ffff ishine55 ishade tile-tere"
               src="./assets/tiles/tile-tere.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-27">
             <img
-              class="tile-tere"
+              class="sphere igradient00ffff ishine55 ishade tile-tere"
               src="./assets/tiles/tile-tere.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-28">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-29">
             <img
-              class="tile-yeray"
+              class="sphere igradient00ffff ishine55 ishade tile-yeray"
               src="./assets/tiles/tile-yeray.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-30">
             <img
-              class="tile-lara"
+              class="sphere igradient00ffff ishine55 ishade tile-lara"
               src="./assets/tiles/tile-lara.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-31">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-32">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-33">
             <img
-              class="tile-jon"
+              class="sphere igradient00ffff ishine55 ishade tile-jon"
               src="./assets/tiles/tile-jon.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-34">
             <img
-              class="tile-jon"
+              class="sphere igradient00ffff ishine55 ishade tile-jon"
               src="./assets/tiles/tile-jon.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-35">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-36">
             <img
-              class="tile-lara"
+              class="sphere igradient00ffff ishine55 ishade tile-lara"
               src="./assets/tiles/tile-lara.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-37">
             <img
-              class="tile-jon"
+              class="sphere igradient00ffff ishine55 ishade tile-jon"
               src="./assets/tiles/tile-jon.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-38">
             <img
-              class="tile-tere"
+              class="sphere igradient00ffff ishine55 ishade tile-tere"
               src="./assets/tiles/tile-tere.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-39">
             <img
-              class="tile-brenda"
+              class="sphere igradient00ffff ishine55 ishade tile-brenda"
               src="./assets/tiles/tile-brenda.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-40">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-41">
             <img
-              class="tile-yeray"
+              class="sphere igradient00ffff ishine55 ishade tile-yeray"
               src="./assets/tiles/tile-yeray.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-42">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-42">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-43">
             <img
-              class="tile-brenda"
+              class="sphere igradient00ffff ishine55 ishade tile-brenda"
               src="./assets/tiles/tile-brenda.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-44">
             <img
-              class="tile-tere"
+              class="sphere igradient00ffff ishine55 ishade tile-tere"
               src="./assets/tiles/tile-tere.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-45">
             <img
-              class="tile-lauri"
+              class="sphere igradient00ffff ishine55 ishade tile-lauri"
               src="./assets/tiles/tile-lauri.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-46">
             <img
-              class="tile-lara"
+              class="sphere igradient00ffff ishine55 ishade tile-lara"
               src="./assets/tiles/tile-lara.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-47">
             <img
-              class="tile-yeray"
+              class="sphere igradient00ffff ishine55 ishade tile-yeray"
               src="./assets/tiles/tile-yeray.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
           <div class="type-48">
             <img
-              class="tile-adrian"
+              class="sphere igradient00ffff ishine55 ishade tile-adrian"
               src="./assets/tiles/tile-adrian.png"
-              style="height: 60px"
+              style="height: 65px"
             />
           </div>
         </main>
