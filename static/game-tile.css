@@ -1,11 +1,11 @@
+.tile {
+  height: 65px;
+}
+
 .picked,
 .target,
 .tile-face {
   border-radius: 50%;
-}
-
-.tile-face {
-  height: 65px;
 }
 
 .picked {

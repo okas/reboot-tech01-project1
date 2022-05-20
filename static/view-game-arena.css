@@ -10,49 +10,23 @@ body {
   background-size: cover;
 }
 
-header {
-  width: 100%;
-  position: relative;
-  margin-bottom: 50px;
-}
-
-#counter {
-  height: 40px;
-  width: 120px;
-  border-radius: 20px;
-  background-color: rgb(73 5 210);
-  margin-top: 20px;
-  color: white;
-  text-align: center;
-  line-height: 40px;
-  position: absolute;
-  left: 230px;
-}
-
-#clock {
-  background-color: rgb(73 5 210);
-  height: 40px;
-  width: 120px;
-  border-radius: 20px;
-  margin-top: 20px;
-  color: white;
-  text-align: center;
-  line-height: 40px;
-  position: absolute;
-  right: 230px;
-}
-
 #view-game-arena {
   display: grid;
-  justify-items: center;
-
-  /* grid-template-columns: 20% 60% 20%; */
-  grid-template-rows: auto;
-  grid-template-areas:
-    "header header header"
-    ". main ."
-    "footer footer footer";
+  grid-template-rows:
+    4.5rem
+    auto
+    auto;
+  grid-template-columns: auto 60% auto;
+  grid-auto-flow: row;
   row-gap: 4rem;
+  /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
+  grid-template-areas:
+    ". header ."
+    ". main ."
+    ". footer .";
+  justify-content: center;
+  justify-items: center;
+  align-items: end;
 }
 
 #game-canvas {
@@ -63,25 +37,26 @@ header {
   gap: 0.3rem;
 }
 
-#game-canvas > div {
-  height: 65px;
-  width: 65px;
-  text-align: center;
-  vertical-align: middle;
-}
-
 #view-game-arena aside {
   grid-area: aside;
 }
 
-#view-game-arena header {
+#view-game-arena > header {
   grid-area: header;
   display: inline-flex;
-  justify-content: center;
+  justify-content: space-evenly;
+  align-items: center;
 }
 
-#view-game-arena header > div {
-  display: inline;
+.statistic-top {
+  height: 2.5rem;
+  width: 5rem;
+  border-radius: 20px;
+  background-color: rgb(73 5 210);
+  color: white;
+  text-align: center;
+  line-height: 40px;
+  margin: auto;
 }
 
 #view-game-arena footer {

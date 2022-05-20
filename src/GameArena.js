@@ -30,6 +30,8 @@ export class GameArena {
   /** @type {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} */
   #elemTiles;
 
+  #stats;
+
   /** @type {TilePicker} */
   #picker;
   /** @type {BoardWalker} */
@@ -45,14 +47,18 @@ export class GameArena {
 
   /**
    * @param {Config}
+   * @param {GameStatistics} gameStatistics
    */
-  constructor({
-    canvasId = "canvasId",
-    rows = 7,
-    cols = 7,
-    badSwapTimeout = 500,
-    timerInterval = 200,
-  }) {
+  constructor(
+    {
+      canvasId = "canvasId",
+      rows = 7,
+      cols = 7,
+      badSwapTimeout = 500,
+      timerInterval = 200,
+    },
+    gameStatistics
+  ) {
     this.#canvasId = canvasId;
     this.#timerInterval = timerInterval;
     this.#badSwapTimeout = badSwapTimeout;
@@ -62,9 +68,11 @@ export class GameArena {
 
     this.#tileCounter = 0;
 
+    this.#stats = gameStatistics;
+
     this.#initDOM();
-    this.#resetCanvas();
-    this.#resetCanvasLayout();
+    this.startGame();
+    // this.#resetCanvasLayout();
   }
 
   get #actionDelay() {
@@ -75,7 +83,8 @@ export class GameArena {
     this.#elemCanvas = document.getElementById("game-canvas");
   }
 
-  #resetCanvas() {
+  startGame() {
+    this.#stats.reset();
     this.#resetCanvasLayout();
     this.#elemCanvas.replaceChildren(
       ...this.#tileFactory(this.#rows * this.#cols)
@@ -180,6 +189,7 @@ export class GameArena {
     const matchFixture = this.#tryFindMatchesByUserSelection();
 
     if (matchFixture) {
+      this.#stats.movesCount++;
       this.#handleUserSuccessSelection(matchFixture);
     } else {
       this.#handleUserBadSelection();
@@ -213,6 +223,12 @@ export class GameArena {
   async #startMainRecursive(matchInfo) {
     const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
 
+    bubbledMatches.forEach((mc) => {
+      if (mc.collection > 1) {
+        this.#stats.comboCount++;
+      }
+    });
+
     const flattened = this.#flattenDomSortedExhaustedMatches(bubbledMatches);
     const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
@@ -223,6 +239,8 @@ export class GameArena {
       console.debug(
         " -> New tiles generated matches, working them through now..."
       );
+
+      this.#stats.comboCount++;
       await this.#startMainRecursive(matchInfoOfNewTiles);
     }
   }
@@ -246,6 +264,8 @@ export class GameArena {
       return [matchInfo];
     }
 
+    this.#stats.comboCount++;
+
     const result = await this.#matchCollapseRecursive(newMatchesAfterCollapse);
     result.push(matchInfo);
 
@@ -253,21 +273,31 @@ export class GameArena {
   }
 
   #isGameOver() {
-    this.#countChances();
+    if (
+      !this.#countChances() &&
+      window.confirm("No chances left 😭\nWould you like to try again?")
+    ) {
+      this.startGame();
+    }
   }
 
+  /**
+   * @returns {number}
+   */
   #countChances() {
     const count1 = this.#chancer1.chances1Count();
     const count2 = this.#chancer1.chances2Count();
-    console.log(" --> TYPE1 chances count: ", count1);
-    console.log(" --> TYPE2 chances count: ", count2);
-    console.log(
-      " --> TOTAL chances count: ",
-      [
-        ...Object.entries(count1).map(([, val]) => val),
-        ...Object.entries(count2).map(([, val]) => val),
-      ].reduce((acc, val) => (acc += val))
-    );
+
+    const totalCount = [count1, count2]
+      .flatMap((x) => Object.entries(x).map(([, count]) => count))
+      .reduce((acc, val) => (acc += val));
+
+    console.debug(" --> TYPE1 chances count: ", count1);
+    console.debug(" --> TYPE2 chances count: ", count2);
+
+    this.#stats.chanceCount = totalCount;
+
+    return totalCount;
   }
 
   /**
@@ -303,6 +333,7 @@ export class GameArena {
   async #sanitizeMatchedTiles(matchInfo) {
     for await (const tile of matchInfo.all) {
       tile.setMatched().onclick = null;
+      this.#stats.matchCount++;
       await sleep(this.#actionDelay / 6);
     }
   }
