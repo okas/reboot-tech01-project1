@@ -251,6 +251,9 @@ export class GameArena {
    */
   async #matchCollapseRecursive(matchInfo) {
     await this.#sanitizeMatchedTiles(matchInfo);
+
+    this.#stats.matchCount += matchInfo.allTiles.length;
+
     await sleep(this.#actionDelay / 1.6);
 
     const collapsedStack = await this.#mover.bubbleMatchToTopEdge(matchInfo);
@@ -263,8 +266,6 @@ export class GameArena {
     if (!newMatchesAfterCollapse) {
       return [matchInfo];
     }
-
-    this.#stats.comboCount++;
 
     const result = await this.#matchCollapseRecursive(newMatchesAfterCollapse);
     result.push(matchInfo);
