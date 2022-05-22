@@ -72,7 +72,6 @@ export class GameArena {
 
     this.#initDOM();
     this.startGame();
-    // this.#resetCanvasLayout();
   }
 
   get #actionDelay() {
@@ -84,11 +83,12 @@ export class GameArena {
   }
 
   startGame() {
-    this.#stats.reset();
     this.#resetCanvasLayout();
+
     this.#elemCanvas.replaceChildren(
       ...this.#tileFactory(this.#rows * this.#cols)
     );
+
     this.#elemTiles = this.#elemCanvas.children;
 
     this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
@@ -164,35 +164,46 @@ export class GameArena {
    */
   async #tileClickHandler(event) {
     event.stopPropagation();
+
+    const intendedSwapDirection = this.#picker.analyzeSelection(
+      event.currentTarget
+    );
+
+    if (intendedSwapDirection) {
+      console.debug(
+        `User picked and put tile to ${intendedSwapDirection} direction.`
+      );
+    } else {
+      return;
+    }
+
     this.#disableCanvas();
-    this.#performGameMove(event.currentTarget);
-    this.#enableCanvas();
+
+    const needToCheckGO = await this.#tryPerformGameMove(event.currentTarget);
+
+    if (!needToCheckGO || this.#canContinue()) {
+      this.#enableCanvas();
+    } else {
+      this.#handleGameOver();
+    }
   }
 
   /**
    * Main vector for user to react with game.
    * @param {GameTile} clickedTile
    */
-  #performGameMove(clickedTile) {
-    const intendedSwapDirection = this.#picker.analyzeSelection(clickedTile);
-
-    if (!intendedSwapDirection) {
-      return;
-    }
-
-    console.debug(
-      `User picked and put tile to ${intendedSwapDirection} direction.`
-    );
-
+  async #tryPerformGameMove(clickedTile) {
     this.#swapUserSelectedTiles();
 
     const matchFixture = this.#tryFindMatchesByUserSelection();
 
     if (matchFixture) {
-      this.#stats.movesCount++;
-      this.#handleUserSuccessSelection(matchFixture);
+      this.#stats.moveCount++;
+      await this.#handleUserSuccessSelection(matchFixture);
+      return true;
     } else {
       this.#handleUserBadSelection();
+      return false;
     }
   }
 
@@ -221,7 +232,7 @@ export class GameArena {
   /**
    * @param {MatchInfoCombo} matchInfo
    * @param {number} cyclesSoFar
-   * @return {number} Number of cycles of regeneration of tiles, that resulted new automatic matches.
+   * @return {Promise<number>} Number of cycles of regeneration of tiles, that resulted new automatic matches.
    */
   async #startMainRecursive(matchInfo, cyclesSoFar = 0) {
     // Start cycle.
@@ -245,7 +256,6 @@ export class GameArena {
 
     // Base case.
     if (!matchInfoOfNewTiles) {
-      this.#isGameOver();
       return cyclesSoFar;
     }
 
@@ -296,15 +306,6 @@ export class GameArena {
    */
   #calculateComboCount(matches) {
     return matches.reduce((acc, cur) => (acc += cur.allMatchesCount), 0);
-  }
-
-  #isGameOver() {
-    if (
-      !this.#countChances() &&
-      window.confirm("No chances left 😭\nWould you like to try again?")
-    ) {
-      this.startGame();
-    }
   }
 
   /**
@@ -358,9 +359,18 @@ export class GameArena {
    */
   async #sanitizeMatchedTiles(matchInfo) {
     for await (const tile of matchInfo.allTiles) {
-      tile.setMatched().onclick = null;
-      await sleep(this.#actionDelay / 6);
+      await this.sanitizeTile(tile, this.#actionDelay / 6);
     }
+  }
+
+  /**
+   * Hides tile from board (visually) and clears it's click event handler.
+   * @param {GameTile} tile
+   * @param {number} speed Speed of action interval for visual effect.
+   */
+  async sanitizeTile(tile, speed) {
+    tile.setMatched().onclick = null;
+    await sleep(speed);
   }
 
   /**
@@ -430,5 +440,32 @@ export class GameArena {
 
   #disableCanvas() {
     this.#elemCanvas.style.pointerEvents = "none";
+  }
+
+  /**
+   * @returns {boolean} `true`, if game continuation conditions are met.
+   */
+  #canContinue() {
+    return !!this.#countChances();
+  }
+
+  #handleGameOver() {
+    console.debug("`Game over` conditions met!");
+    Promise.resolve().then(() => {
+      window.confirm("No chances left 😭\nWould you like to try again?") &&
+        this.#restartGame();
+    });
+  }
+
+  async #restartGame() {
+    console.debug("Restarting the game.");
+
+    this.#stats.reset();
+
+    for (const tile of this.#elemTiles) {
+      await this.sanitizeTile(tile, this.#actionDelay / 20);
+    }
+
+    this.startGame();
   }
 }

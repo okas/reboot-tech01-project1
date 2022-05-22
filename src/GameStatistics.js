@@ -61,11 +61,11 @@ export class GameStatistics {
   /**
    * @return {number}
    */
-  get movesCount() {
+  get moveCount() {
     return this.#moveCount;
   }
 
-  set movesCount(val) {
+  set moveCount(val) {
     this.#moveCount = val;
     Promise.resolve(val).then((v) => (this.#elemMovesCounter.textContent = v));
   }
