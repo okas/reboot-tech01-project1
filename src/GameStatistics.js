@@ -36,9 +36,8 @@ export class GameStatistics {
    * @param {Config} htmlMappings
    */
   constructor(htmlMappings) {
-    this.reset();
-
     this.#initDom(htmlMappings);
+    this.reset();
   }
 
   /**
@@ -119,10 +118,10 @@ export class GameStatistics {
   }
 
   reset() {
-    this.#timer = 0;
-    this.#moveCount = 0;
-    this.#matchCount = 0;
-    this.#comboCount = 0;
-    this.#chanceCount = 0;
+    this.timer = 0;
+    this.moveCount = 0;
+    this.matchCount = 0;
+    this.comboCount = 0;
+    this.chanceCount = 0;
   }
 }
