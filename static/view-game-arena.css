@@ -13,12 +13,12 @@ body {
 #view-game-arena {
   display: grid;
   grid-template-rows:
-    4.5rem
+    5.5rem
     auto
     auto;
-  grid-template-columns: auto 60% auto;
+  grid-template-columns: auto 30rem auto;
   grid-auto-flow: row;
-  row-gap: 4rem;
+  row-gap: 3.5rem;
   /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
   grid-template-areas:
     ". header ."
@@ -44,19 +44,9 @@ body {
 #view-game-arena > header {
   grid-area: header;
   display: inline-flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
-}
-
-.statistic-top {
-  height: 2.5rem;
-  width: 5rem;
-  border-radius: 20px;
-  background-color: rgb(73 5 210);
-  color: white;
-  text-align: center;
-  line-height: 40px;
-  margin: auto;
+  width: 30rem;
 }
 
 #view-game-arena footer {
@@ -64,5 +54,26 @@ body {
 }
 
 #view-game-arena-footer-image img {
-  max-width: 500px;
+  max-width: 30rem;
+}
+
+.statistics-top {
+  height: 4.5rem;
+  width: 4.5rem;
+  border-radius: 50%;
+  background-color: rgb(73 5 210);
+  text-align: center;
+  box-shadow: 0 6px 6px 6px black;
+}
+
+.statistics-top > .label {
+  padding-top: 1rem;
+  vertical-align: bottom;
+  line-height: 1.5rem;
+  color: cadetblue;
+}
+
+.statistics-top > .value {
+  line-height: 1rem;
+  color: chartreuse;
 }
