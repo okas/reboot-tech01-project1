@@ -218,31 +218,46 @@ export class GameArena {
 
   /**
    * @param {MatchInfoCombo} matchInfo
-   * @return {Promise<MatchInfoCombo[]>}
+   * @param {number} cyclesSoFar
+   * @return {number} Number of cycles of regeneration of tiles, that resulted new automatic matches.
    */
-  async #startMainRecursive(matchInfo) {
+  async #startMainRecursive(matchInfo, cyclesSoFar = 0) {
+    // Start cycle.
     const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
+    // => Cycle done.
 
-    bubbledMatches.forEach((mc) => {
-      if (mc.collection > 1) {
-        this.#stats.comboCount++;
-      }
-    });
+    cyclesSoFar++;
 
+    const comboCount = this.#calculateComboCount(bubbledMatches);
+
+    if (cyclesSoFar === 1) {
+      this.#stats.comboCount += comboCount > 1 ? comboCount : 0;
+    } else {
+      this.#stats.comboCount += comboCount;
+    }
+
+    // Prepare next cycle, if it is possible.
     const flattened = this.#flattenDomSortedExhaustedMatches(bubbledMatches);
     const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
+    // Base case.
     if (!matchInfoOfNewTiles) {
-      console.log(this.#isGameOver());
-    } else {
-      console.debug(
-        " -> New tiles generated matches, working them through now..."
-      );
-
-      this.#stats.comboCount++;
-      await this.#startMainRecursive(matchInfoOfNewTiles);
+      this.#isGameOver();
+      return cyclesSoFar;
     }
+
+    console.debug(
+      " -> New tiles generated matches, working them through now..."
+    );
+
+    // 2nd cycle is confirmed: fix combo count.
+
+    if (cyclesSoFar === 1 && comboCount === 1) {
+      this.#stats.comboCount++;
+    }
+
+    return await this.#startMainRecursive(matchInfoOfNewTiles, cyclesSoFar);
   }
 
   /**
