@@ -17,6 +17,9 @@ import { TileMatcherChance } from "./TileMatcherChance.js";
  */
 
 export class GameArena {
+  /** @type {number} */
+  #gameTimerId;
+
   #rows;
   #cols;
   #timerInterval;
@@ -64,6 +67,26 @@ export class GameArena {
   }
 
   star() {
+    this.#initTools();
+
+    this.#countChances();
+
+    this.#ui.enableCanvas();
+
+    this.#stats.timer = 60;
+
+    this.#gameTimerId = setInterval(this.#ticker.bind(this), 1000);
+  }
+
+  #ticker() {
+    if (this.#stats.timer > 0) {
+      this.#stats.timer--;
+    } else {
+      clearInterval(this.#gameTimerId);
+    }
+  }
+
+  #initTools() {
     this.#elemTiles = this.#ui.createBoard(
       this.#rows,
       this.#cols,
@@ -72,21 +95,15 @@ export class GameArena {
 
     this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
 
-    this.#initTools();
-
-    this.#countChances();
-
-    this.#ui.enableCanvas();
-  }
-
-  #initTools() {
     this.#walker = new BoardWalker(this.#rows, this.#cols);
+
     this.#matcher = new TileMatcher(
       this.#rows,
       this.#cols,
       this.#elemTiles,
       this.#walker
     );
+
     this.#chancer1 = new TileMatcherChance(
       this.#rows,
       this.#cols,
@@ -94,6 +111,7 @@ export class GameArena {
       this.#walker
     );
     this.#picker = new TilePicker(this.#cols, this.#elemTiles);
+
     this.#mover = new TileMover(
       this.#rows,
       this.#cols,
