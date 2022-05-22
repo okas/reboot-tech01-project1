@@ -211,7 +211,9 @@ export class GameArena {
 
     await sleep(this.#actionDelay);
     this.#picker.resetUserSelection();
-    await this.#startMainRecursive(matchInfo);
+
+    const regenerations = await this.#startMainRecursive(matchInfo);
+    console.debug(regenerations);
 
     console.debug("Done with matching series!\n   ..--=/=--..\n");
   }
