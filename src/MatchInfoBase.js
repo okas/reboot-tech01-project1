@@ -25,7 +25,7 @@ export class MatchInfoBase {
       : -1;
   }
 
-  get all() {
+  get allTiles() {
     return (this.#all ??= [...new Set(this._allCombiner())]);
   }
 
@@ -35,12 +35,12 @@ export class MatchInfoBase {
    * but is essential for matched tile bubbling control.
    */
   get allDomSorted() {
-    return [...this.all].sort(MatchInfoBase.domSortAsc);
+    return [...this.allTiles].sort(MatchInfoBase.domSortAsc);
   }
 
   *takeSnapShot() {
     const currentSorted = this.allDomSorted;
-    for (let i = 1; i < this.all.size; i++) {
+    for (let i = 1; i < this.allTiles.size; i++) {
       yield this.#elemTiles.indexOf(currentSorted[i]) -
         this.#elemTiles.indexOf(currentSorted[i - 1]);
     }

@@ -30,6 +30,8 @@ export class GameArena {
   /** @type {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} */
   #elemTiles;
 
+  #stats;
+
   /** @type {TilePicker} */
   #picker;
   /** @type {BoardWalker} */
@@ -45,14 +47,18 @@ export class GameArena {
 
   /**
    * @param {Config}
+   * @param {GameStatistics} gameStatistics
    */
-  constructor({
-    canvasId = "canvasId",
-    rows = 7,
-    cols = 7,
-    badSwapTimeout = 500,
-    timerInterval = 200,
-  }) {
+  constructor(
+    {
+      canvasId = "canvasId",
+      rows = 7,
+      cols = 7,
+      badSwapTimeout = 500,
+      timerInterval = 200,
+    },
+    gameStatistics
+  ) {
     this.#canvasId = canvasId;
     this.#timerInterval = timerInterval;
     this.#badSwapTimeout = badSwapTimeout;
@@ -62,9 +68,10 @@ export class GameArena {
 
     this.#tileCounter = 0;
 
+    this.#stats = gameStatistics;
+
     this.#initDOM();
-    this.#resetCanvas();
-    this.#resetCanvasLayout();
+    this.startGame();
   }
 
   get #actionDelay() {
@@ -75,11 +82,13 @@ export class GameArena {
     this.#elemCanvas = document.getElementById("game-canvas");
   }
 
-  #resetCanvas() {
+  startGame() {
     this.#resetCanvasLayout();
+
     this.#elemCanvas.replaceChildren(
       ...this.#tileFactory(this.#rows * this.#cols)
     );
+
     this.#elemTiles = this.#elemCanvas.children;
 
     this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
@@ -155,34 +164,46 @@ export class GameArena {
    */
   async #tileClickHandler(event) {
     event.stopPropagation();
+
+    const intendedSwapDirection = this.#picker.analyzeSelection(
+      event.currentTarget
+    );
+
+    if (intendedSwapDirection) {
+      console.debug(
+        `User picked and put tile to ${intendedSwapDirection} direction.`
+      );
+    } else {
+      return;
+    }
+
     this.#disableCanvas();
-    this.#performGameMove(event.currentTarget);
-    this.#enableCanvas();
+
+    const needToCheckGO = await this.#tryPerformGameMove(event.currentTarget);
+
+    if (!needToCheckGO || this.#canContinue()) {
+      this.#enableCanvas();
+    } else {
+      this.#handleGameOver();
+    }
   }
 
   /**
    * Main vector for user to react with game.
    * @param {GameTile} clickedTile
    */
-  #performGameMove(clickedTile) {
-    const intendedSwapDirection = this.#picker.analyzeSelection(clickedTile);
-
-    if (!intendedSwapDirection) {
-      return;
-    }
-
-    console.debug(
-      `User picked and put tile to ${intendedSwapDirection} direction.`
-    );
-
+  async #tryPerformGameMove(clickedTile) {
     this.#swapUserSelectedTiles();
 
     const matchFixture = this.#tryFindMatchesByUserSelection();
 
     if (matchFixture) {
-      this.#handleUserSuccessSelection(matchFixture);
+      this.#stats.moveCount++;
+      await this.#handleUserSuccessSelection(matchFixture);
+      return true;
     } else {
       this.#handleUserBadSelection();
+      return false;
     }
   }
 
@@ -201,30 +222,54 @@ export class GameArena {
 
     await sleep(this.#actionDelay);
     this.#picker.resetUserSelection();
-    await this.#startMainRecursive(matchInfo);
+
+    const regenerations = await this.#startMainRecursive(matchInfo);
+    console.debug(regenerations);
 
     console.debug("Done with matching series!\n   ..--=/=--..\n");
   }
 
   /**
    * @param {MatchInfoCombo} matchInfo
-   * @return {Promise<MatchInfoCombo[]>}
+   * @param {number} cyclesSoFar
+   * @return {Promise<number>} Number of cycles of regeneration of tiles, that resulted new automatic matches.
    */
-  async #startMainRecursive(matchInfo) {
+  async #startMainRecursive(matchInfo, cyclesSoFar = 0) {
+    // Start cycle.
     const bubbledMatches = await this.#matchCollapseRecursive(matchInfo);
+    // => Cycle done.
 
+    cyclesSoFar++;
+
+    const comboCount = this.#calculateComboCount(bubbledMatches);
+
+    if (cyclesSoFar === 1) {
+      this.#stats.comboCount += comboCount > 1 ? comboCount : 0;
+    } else {
+      this.#stats.comboCount += comboCount;
+    }
+
+    // Prepare next cycle, if it is possible.
     const flattened = this.#flattenDomSortedExhaustedMatches(bubbledMatches);
     const newTiles = await this.#generateNewTiles(flattened);
     const matchInfoOfNewTiles = this.#tryFindMatches(...newTiles);
 
+    // Base case.
     if (!matchInfoOfNewTiles) {
-      console.log(this.#isGameOver());
-    } else {
-      console.debug(
-        " -> New tiles generated matches, working them through now..."
-      );
-      await this.#startMainRecursive(matchInfoOfNewTiles);
+      return cyclesSoFar;
     }
+
+    console.debug(
+      " -> New tiles generated matches, working them through now..."
+    );
+
+    // 2nd cycle is confirmed: fix combo count.
+
+    if (cyclesSoFar === 1 && comboCount === 1) {
+      this.#stats.comboCount++;
+    }
+
+    return await this.#startMainRecursive(matchInfoOfNewTiles, cyclesSoFar);
   }
 
   /**
@@ -233,6 +278,9 @@ export class GameArena {
    */
   async #matchCollapseRecursive(matchInfo) {
     await this.#sanitizeMatchedTiles(matchInfo);
+
+    this.#stats.matchCount += matchInfo.allTiles.length;
+
     await sleep(this.#actionDelay / 1.6);
 
     const collapsedStack = await this.#mover.bubbleMatchToTopEdge(matchInfo);
@@ -252,22 +300,31 @@ export class GameArena {
     return result;
   }
 
-  #isGameOver() {
-    this.#countChances();
+  /**
+   * @param {MatchInfoCombo} matchInfo
+   * @return {number} Sum of individual matches.
+   */
+  #calculateComboCount(matches) {
+    return matches.reduce((acc, cur) => (acc += cur.allMatchesCount), 0);
   }
 
+  /**
+   * @returns {number}
+   */
   #countChances() {
     const count1 = this.#chancer1.chances1Count();
     const count2 = this.#chancer1.chances2Count();
-    console.log(" --> TYPE1 chances count: ", count1);
-    console.log(" --> TYPE2 chances count: ", count2);
-    console.log(
-      " --> TOTAL chances count: ",
-      [
-        ...Object.entries(count1).map(([, val]) => val),
-        ...Object.entries(count2).map(([, val]) => val),
-      ].reduce((acc, val) => (acc += val))
-    );
+
+    const totalCount = [count1, count2]
+      .flatMap((x) => Object.entries(x).map(([, count]) => count))
+      .reduce((acc, val) => (acc += val));
+
+    console.debug(" --> TYPE1 chances count: ", count1);
+    console.debug(" --> TYPE2 chances count: ", count2);
+
+    this.#stats.chanceCount = totalCount;
+
+    return totalCount;
   }
 
   /**
@@ -288,7 +345,7 @@ export class GameArena {
 
       if (match) {
         matches.push(match);
-        match.all.forEach((m) => checkBag.add(m));
+        match.allTiles.forEach((m) => checkBag.add(m));
       }
     }
 
@@ -301,10 +358,19 @@ export class GameArena {
    * @param {MatchInfoCombo} matchInfo
    */
   async #sanitizeMatchedTiles(matchInfo) {
-    for await (const tile of matchInfo.all) {
-      tile.setMatched().onclick = null;
-      await sleep(this.#actionDelay / 6);
+    for await (const tile of matchInfo.allTiles) {
+      await this.sanitizeTile(tile, this.#actionDelay / 6);
     }
+  }
+
+  /**
+   * Hides tile from board (visually) and clears it's click event handler.
+   * @param {GameTile} tile
+   * @param {number} speed Speed of action interval for visual effect.
+   */
+  async sanitizeTile(tile, speed) {
+    tile.setMatched().onclick = null;
+    await sleep(speed);
   }
 
   /**
@@ -327,7 +393,7 @@ export class GameArena {
    */
   #flattenDomSortedExhaustedMatches(allMatchesData) {
     return allMatchesData
-      .flatMap(({ all }) => all)
+      .flatMap(({ allTiles: all }) => all)
       .sort(MatchInfoBase.domSortAsc);
   }
 
@@ -374,5 +440,32 @@ export class GameArena {
 
   #disableCanvas() {
     this.#elemCanvas.style.pointerEvents = "none";
+  }
+
+  /**
+   * @returns {boolean} `true`, if game continuation conditions are met.
+   */
+  #canContinue() {
+    return !!this.#countChances();
+  }
+
+  #handleGameOver() {
+    console.debug("`Game over` conditions met!");
+    Promise.resolve().then(() => {
+      window.confirm("No chances left 😭\nWould you like to try again?") &&
+        this.#restartGame();
+    });
+  }
+
+  async #restartGame() {
+    console.debug("Restarting the game.");
+
+    this.#stats.reset();
+
+    for (const tile of this.#elemTiles) {
+      await this.sanitizeTile(tile, this.#actionDelay / 20);
+    }
+
+    this.startGame();
   }
 }

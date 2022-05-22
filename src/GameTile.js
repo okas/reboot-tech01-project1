@@ -118,7 +118,7 @@ export class GameTile extends HTMLDivElement {
   }
 
   connectedCallback() {
-    this.classList.add(GameTile.#tileClassMap.get(this.#type));
+    this.classList.add("tile", GameTile.#tileClassMap.get(this.#type));
 
     // eslint-disable-next-line no-undef, camelcase
     cvi_sphere.add(this.#elemImg, GameTile.cviSphereConf);

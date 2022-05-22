@@ -36,9 +36,19 @@ export class TileMatcher extends TileMatcherBase {
 
     const matchY = [...(raw.up ?? []), tileToAnalyze, ...(raw.down ?? [])];
 
-    return matchX?.length >= 3 || matchY?.length >= 3
-      ? new MatchInfo(this.#elemTiles, matchX, matchY)
-      : null;
+    if (!(matchX?.length >= 3 || matchY?.length >= 3)) {
+      return null;
+    }
+
+    return new MatchInfo(
+      this.#elemTiles,
+      this.#getAxesMatchByThreshold(matchX),
+      this.#getAxesMatchByThreshold(matchY)
+    );
+  }
+
+  #getAxesMatchByThreshold(axisContents) {
+    return axisContents?.length >= 3 ? axisContents : null;
   }
 
   #obtainDirectionalMatchInfo(tileToAnalyze) {
