@@ -83,7 +83,18 @@ export class GameArena {
       this.#stats.timer--;
     } else {
       clearInterval(this.#gameTimerId);
+      // TODO: Shout GO!
     }
+  }
+
+  #updateStatsMatch(matches) {
+    this.#stats.timer += matches;
+    this.#stats.matchCount += matches;
+  }
+
+  #updateStatsCombo(combos) {
+    this.#stats.timer += combos * 2;
+    this.#stats.comboCount += combos;
   }
 
   #initTools() {
@@ -206,9 +217,9 @@ export class GameArena {
     const comboCount = this.#calculateComboCount(bubbledMatches);
 
     if (cyclesSoFar === 1) {
-      this.#stats.comboCount += comboCount > 1 ? comboCount : 0;
+      this.#updateStatsCombo(comboCount > 1 ? comboCount : 0);
     } else {
-      this.#stats.comboCount += comboCount;
+      this.#updateStatsCombo(comboCount);
     }
 
     // Prepare next cycle, if it is possible.
@@ -228,7 +239,7 @@ export class GameArena {
     // 2nd cycle is confirmed: fix combo count.
 
     if (cyclesSoFar === 1 && comboCount === 1) {
-      this.#stats.comboCount++;
+      this.#updateStatsCombo(1);
     }
 
     return await this.#startMainRecursive(matchInfoOfNewTiles, cyclesSoFar);
@@ -239,9 +250,9 @@ export class GameArena {
    * @return {Promise<MatchInfoCombo[]>}
    */
   async #matchCollapseRecursive(matchInfo) {
-    await this.#sanitizeMatchedTiles(matchInfo);
+    this.#updateStatsMatch(matchInfo.allTiles.length);
 
-    this.#stats.matchCount += matchInfo.allTiles.length;
+    await this.#sanitizeMatchedTiles(matchInfo);
 
     await sleep(this.#actionDelay / 1.6);
 
