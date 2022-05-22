@@ -344,7 +344,7 @@ export class GameArena {
 
       if (match) {
         matches.push(match);
-        match.all.forEach((m) => checkBag.add(m));
+        match.allTiles.forEach((m) => checkBag.add(m));
       }
     }
 
@@ -357,9 +357,8 @@ export class GameArena {
    * @param {MatchInfoCombo} matchInfo
    */
   async #sanitizeMatchedTiles(matchInfo) {
-    for await (const tile of matchInfo.all) {
+    for await (const tile of matchInfo.allTiles) {
       tile.setMatched().onclick = null;
-      this.#stats.matchCount++;
       await sleep(this.#actionDelay / 6);
     }
   }
@@ -384,7 +383,7 @@ export class GameArena {
    */
   #flattenDomSortedExhaustedMatches(allMatchesData) {
     return allMatchesData
-      .flatMap(({ all }) => all)
+      .flatMap(({ allTiles: all }) => all)
       .sort(MatchInfoBase.domSortAsc);
   }
 
