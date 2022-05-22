@@ -1,5 +1,11 @@
 import { GameArena } from "./GameArena.js";
 import { GameStatistics } from "./GameStatistics.js";
+import { GameUI } from "./GameUI.js";
+
+const rows = 7;
+const cols = 7;
+
+const gameUI = new GameUI("game-canvas");
 
 // Let's build dependencies.
 const gameStatistics = new GameStatistics({
@@ -11,5 +17,6 @@ const gameStatistics = new GameStatistics({
 });
 
 // Game bootstrapping
-// eslint-disable-next-line no-unused-vars
-const game = new GameArena({ rows: 7, cols: 7 }, gameStatistics);
+const game = new GameArena({ rows, cols }, gameUI, gameStatistics);
+
+game.star();

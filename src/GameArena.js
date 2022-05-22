@@ -1,16 +1,14 @@
-import { GameTile } from "./GameTile.js";
 import { TilePicker } from "./TilePicker.js";
 import { BoardWalker } from "./BoardWalker.js";
 import { TileMatcher } from "./TileMatcher.js";
 import { TileMover } from "./TileMover.js";
-import { extendFromArrayIndexOf, rangeGenerator, sleep } from "./utilities.js";
+import { extendFromArrayIndexOf, sleep } from "./utilities.js";
 import { MatchInfoCombo } from "./MatchInfoCombo.js";
 import { MatchInfoBase } from "./MatchInfoBase.js";
 import { TileMatcherChance } from "./TileMatcherChance.js";
 
 /**
  * @typedef {Object} Config
- * @property {string} canvasId
  * @property {number} rows
  * @property {number} cols
  * @property {number} badSwapTimeout Allows to control timing when to switch back user bar selection.
@@ -19,17 +17,15 @@ import { TileMatcherChance } from "./TileMatcherChance.js";
  */
 
 export class GameArena {
-  #canvasId;
   #rows;
   #cols;
   #timerInterval;
   #badSwapTimeout;
 
-  /** @type {HTMLElement} */
-  #elemCanvas;
   /** @type {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} */
   #elemTiles;
 
+  #ui;
   #stats;
 
   /** @type {TilePicker} */
@@ -42,97 +38,45 @@ export class GameArena {
   #chancer1;
   /** @type {TileMover} */
   #mover;
-  /** @type {number} */
-  #tileCounter;
 
   /**
    * @param {Config}
+   * @param {GameUI} gameUI
    * @param {GameStatistics} gameStatistics
    */
   constructor(
-    {
-      canvasId = "canvasId",
-      rows = 7,
-      cols = 7,
-      badSwapTimeout = 500,
-      timerInterval = 200,
-    },
+    { rows, cols, badSwapTimeout = 500, timerInterval = 200 },
+    gameUI,
     gameStatistics
   ) {
-    this.#canvasId = canvasId;
     this.#timerInterval = timerInterval;
     this.#badSwapTimeout = badSwapTimeout;
 
     this.#rows = rows;
     this.#cols = cols;
 
-    this.#tileCounter = 0;
-
+    this.#ui = gameUI;
     this.#stats = gameStatistics;
-
-    this.#initDOM();
-    this.startGame();
   }
 
   get #actionDelay() {
     return this.#timerInterval;
   }
 
-  #initDOM() {
-    this.#elemCanvas = document.getElementById("game-canvas");
-  }
-
-  startGame() {
-    this.#resetCanvasLayout();
-
-    this.#elemCanvas.replaceChildren(
-      ...this.#tileFactory(this.#rows * this.#cols)
+  star() {
+    this.#elemTiles = this.#ui.createBoard(
+      this.#rows,
+      this.#cols,
+      this.#tileClickHandler.bind(this)
     );
-
-    this.#elemTiles = this.#elemCanvas.children;
 
     this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
 
     this.#initTools();
 
     this.#countChances();
-  }
 
-  #resetCanvasLayout() {
-    const { gridTemplateColumns } = window.getComputedStyle(this.#elemCanvas);
-    const extractedColWidth = /\d+.?\d*px/i.exec(gridTemplateColumns)[0];
-    const newValue = `repeat(${this.#cols}, ${extractedColWidth})`;
-
-    this.#elemCanvas.style.gridTemplateColumns = newValue;
-  }
-
-  /**
-   * @param {number} amount
-   */
-  *#tileFactory(amount) {
-    for (const k of rangeGenerator(
-      this.#tileCounter + amount,
-      ++this.#tileCounter
-    )) {
-      this.#tileCounter = k;
-      yield this.#createTile(this.#getRandomTileKey(), k);
-    }
-  }
-
-  #getRandomTileKey() {
-    return Math.ceil(Math.random() * GameTile.typeCount);
-  }
-
-  #createTile(tileKey, id) {
-    const tile = new GameTile({
-      id: id - 1,
-      type: tileKey,
-      worth: 1,
-      leverage: 1.25,
-    });
-    tile.onclick = this.#tileClickHandler.bind(this);
-
-    return tile;
+    this.#ui.enableCanvas();
   }
 
   #initTools() {
@@ -177,12 +121,12 @@ export class GameArena {
       return;
     }
 
-    this.#disableCanvas();
+    this.#ui.disableCanvas();
 
     const needToCheckGO = await this.#tryPerformGameMove(event.currentTarget);
 
     if (!needToCheckGO || this.#canContinue()) {
-      this.#enableCanvas();
+      this.#ui.enableCanvas();
     } else {
       this.#handleGameOver();
     }
@@ -359,18 +303,8 @@ export class GameArena {
    */
   async #sanitizeMatchedTiles(matchInfo) {
     for await (const tile of matchInfo.allTiles) {
-      await this.sanitizeTile(tile, this.#actionDelay / 6);
+      await this.#ui.sanitizeTile(tile, this.#actionDelay / 6);
     }
-  }
-
-  /**
-   * Hides tile from board (visually) and clears it's click event handler.
-   * @param {GameTile} tile
-   * @param {number} speed Speed of action interval for visual effect.
-   */
-  async sanitizeTile(tile, speed) {
-    tile.setMatched().onclick = null;
-    await sleep(speed);
   }
 
   /**
@@ -402,7 +336,10 @@ export class GameArena {
    * @param {GameTile[]} allMatchesData
    */
   async #generateNewTiles(allMatchesData) {
-    const newTileGenerator = this.#tileFactory(allMatchesData.length);
+    const newTileGenerator = this.#ui.tileFactory(
+      allMatchesData.length,
+      this.#tileClickHandler.bind(this)
+    );
 
     const result = [];
 
@@ -434,14 +371,6 @@ export class GameArena {
     this.#mover.swapTiles(this.#picker.firstTile, this.#picker.secondTile);
   }
 
-  #enableCanvas() {
-    this.#elemCanvas.style.pointerEvents = "auto";
-  }
-
-  #disableCanvas() {
-    this.#elemCanvas.style.pointerEvents = "none";
-  }
-
   /**
    * @returns {boolean} `true`, if game continuation conditions are met.
    */
@@ -463,9 +392,9 @@ export class GameArena {
     this.#stats.reset();
 
     for (const tile of this.#elemTiles) {
-      await this.sanitizeTile(tile, this.#actionDelay / 20);
+      await this.#ui.sanitizeTile(tile, this.#actionDelay / 20);
     }
 
-    this.startGame();
+    this.star();
   }
 }
