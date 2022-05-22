@@ -272,6 +272,14 @@ export class GameArena {
     return result;
   }
 
+  /**
+   * @param {MatchInfoCombo} matchInfo
+   * @return {number} Sum of individual matches.
+   */
+  #calculateComboCount(matches) {
+    return matches.reduce((acc, cur) => (acc += cur.allMatchesCount), 0);
+  }
+
   #isGameOver() {
     if (
       !this.#countChances() &&
