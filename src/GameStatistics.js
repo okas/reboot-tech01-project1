@@ -30,6 +30,8 @@ export class GameStatistics {
   /** @type {HTMLElement} */
   #elemMatchCombos;
 
+  static #formatOptions;
+
   static #handler;
 
   /**
@@ -114,7 +116,28 @@ export class GameStatistics {
 
   set timer(val) {
     this.#timer = val;
-    Promise.resolve(val).then((v) => (this.#elemTimer.textContent = v));
+    Promise.resolve(val).then(
+      (v) => (this.#elemTimer.textContent = this.#formatTime(v))
+    );
+  }
+
+  static {
+    this.#formatOptions = {
+      minute: "2-digit",
+      second: "2-digit",
+    };
+  }
+
+  /**
+   * @param  {number} seconds
+   */
+  #formatTime(seconds) {
+    const counterState = new Date(0, 0, 0, 0, 0, seconds);
+
+    return new Intl.DateTimeFormat(
+      "default",
+      GameStatistics.#formatOptions
+    ).format(counterState);
   }
 
   reset() {

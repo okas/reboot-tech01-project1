@@ -11,16 +11,21 @@ import { TileMatcherChance } from "./TileMatcherChance.js";
  * @typedef {Object} Config
  * @property {number} rows
  * @property {number} cols
+ * @property {number} initialDuration
  * @property {number} badSwapTimeout Allows to control timing when to switch back user bar selection.
  * @property {number} timerInterval Main interval of cycle in game.
  *                    Various places in program use own coefficient, to be relates to this value.
  */
 
 export class GameArena {
+  /** @type {number} */
+  #gameTimerId;
+
   #rows;
   #cols;
   #timerInterval;
   #badSwapTimeout;
+  #initialDuration;
 
   /** @type {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} */
   #elemTiles;
@@ -45,15 +50,22 @@ export class GameArena {
    * @param {GameStatistics} gameStatistics
    */
   constructor(
-    { rows, cols, badSwapTimeout = 500, timerInterval = 200 },
+    {
+      rows,
+      cols,
+      initialDuration = 60,
+      badSwapTimeout = 500,
+      timerInterval = 200,
+    },
     gameUI,
     gameStatistics
   ) {
-    this.#timerInterval = timerInterval;
-    this.#badSwapTimeout = badSwapTimeout;
-
     this.#rows = rows;
     this.#cols = cols;
+
+    this.#initialDuration = initialDuration;
+    this.#timerInterval = timerInterval;
+    this.#badSwapTimeout = badSwapTimeout;
 
     this.#ui = gameUI;
     this.#stats = gameStatistics;
@@ -63,7 +75,22 @@ export class GameArena {
     return this.#timerInterval;
   }
 
-  star() {
+  /**
+   * @param {number} initialDuration If omitted, that default from constructor will be used.
+   */
+  star(initialDuration) {
+    this.#initTools();
+
+    this.#countChances();
+
+    this.#ui.enableCanvas();
+
+    this.#stats.timer = initialDuration ?? this.#initialDuration;
+
+    this.#gameTimerId = setInterval(this.#ticker.bind(this), 1000);
+  }
+
+  #initTools() {
     this.#elemTiles = this.#ui.createBoard(
       this.#rows,
       this.#cols,
@@ -72,21 +99,15 @@ export class GameArena {
 
     this.#elemTiles = extendFromArrayIndexOf(this.#elemTiles);
 
-    this.#initTools();
-
-    this.#countChances();
-
-    this.#ui.enableCanvas();
-  }
-
-  #initTools() {
     this.#walker = new BoardWalker(this.#rows, this.#cols);
+
     this.#matcher = new TileMatcher(
       this.#rows,
       this.#cols,
       this.#elemTiles,
       this.#walker
     );
+
     this.#chancer1 = new TileMatcherChance(
       this.#rows,
       this.#cols,
@@ -94,6 +115,7 @@ export class GameArena {
       this.#walker
     );
     this.#picker = new TilePicker(this.#cols, this.#elemTiles);
+
     this.#mover = new TileMover(
       this.#rows,
       this.#cols,
@@ -101,6 +123,30 @@ export class GameArena {
       this.#walker,
       this.#actionDelay
     );
+  }
+
+  #ticker() {
+    if (this.#stats.timer > 0) {
+      this.#stats.timer--;
+    } else {
+      this.#endTheGame();
+    }
+  }
+
+  #updateStatsMatch(matches) {
+    this.#stats.timer += matches;
+    this.#stats.matchCount += matches;
+  }
+
+  #updateStatsCombo(combos) {
+    this.#stats.timer += combos * 2;
+    this.#stats.comboCount += combos;
+  }
+
+  #endTheGame() {
+    clearInterval(this.#gameTimerId);
+    this.#ui.disableCanvas();
+    this.#handleGameOverOOT();
   }
 
   /**
@@ -128,7 +174,7 @@ export class GameArena {
     if (!needToCheckGO || this.#canContinue()) {
       this.#ui.enableCanvas();
     } else {
-      this.#handleGameOver();
+      this.#handleGameOverOOC();
     }
   }
 
@@ -188,9 +234,9 @@ export class GameArena {
     const comboCount = this.#calculateComboCount(bubbledMatches);
 
     if (cyclesSoFar === 1) {
-      this.#stats.comboCount += comboCount > 1 ? comboCount : 0;
+      this.#updateStatsCombo(comboCount > 1 ? comboCount : 0);
     } else {
-      this.#stats.comboCount += comboCount;
+      this.#updateStatsCombo(comboCount);
     }
 
     // Prepare next cycle, if it is possible.
@@ -210,7 +256,7 @@ export class GameArena {
     // 2nd cycle is confirmed: fix combo count.
 
     if (cyclesSoFar === 1 && comboCount === 1) {
-      this.#stats.comboCount++;
+      this.#updateStatsCombo(1);
     }
 
     return await this.#startMainRecursive(matchInfoOfNewTiles, cyclesSoFar);
@@ -221,9 +267,9 @@ export class GameArena {
    * @return {Promise<MatchInfoCombo[]>}
    */
   async #matchCollapseRecursive(matchInfo) {
-    await this.#sanitizeMatchedTiles(matchInfo);
+    this.#updateStatsMatch(matchInfo.allTiles.length);
 
-    this.#stats.matchCount += matchInfo.allTiles.length;
+    await this.#sanitizeMatchedTiles(matchInfo);
 
     await sleep(this.#actionDelay / 1.6);
 
@@ -375,11 +421,21 @@ export class GameArena {
    * @returns {boolean} `true`, if game continuation conditions are met.
    */
   #canContinue() {
-    return !!this.#countChances();
+    return this.#stats.timer > 0 && !!this.#countChances();
   }
 
-  #handleGameOver() {
-    console.debug("`Game over` conditions met!");
+  #handleGameOverOOT() {
+    console.debug("`Game over` conditions met: timeout!");
+
+    Promise.resolve().then(() => {
+      window.confirm("Time is out 😭\nWould you like to try again?") &&
+        this.#restartGame();
+    });
+  }
+
+  #handleGameOverOOC() {
+    console.debug("`Game over` conditions met: chances out!");
+
     Promise.resolve().then(() => {
       window.confirm("No chances left 😭\nWould you like to try again?") &&
         this.#restartGame();
