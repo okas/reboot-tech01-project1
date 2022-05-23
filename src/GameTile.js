@@ -29,8 +29,9 @@ export class GameTile extends HTMLDivElement {
     return {
       size: 80,
       shine: 55,
+      color: "0000ff",
       color2: "00ffff",
-      shade: 105,
+      shade: 100,
     };
   }
 

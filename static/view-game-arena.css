@@ -11,8 +11,9 @@ body {
 }
 
 :root {
-  --canvas-tile-width: 75px;
-  --canvas-tile-height: 75px;
+  --canvas-tile-width: 77px;
+  --canvas-tile-height: 77px;
+  --game-view-mid-column-width: 34.25rem;
 }
 
 #view-game-arena {
@@ -21,9 +22,9 @@ body {
     5.5rem
     auto
     auto;
-  grid-template-columns: auto 36.5rem auto;
+  grid-template-columns: auto var(--game-view-mid-column-width) auto;
   grid-auto-flow: row;
-  row-gap: 3.5rem;
+  row-gap: 2rem;
   /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
   grid-template-areas:
     ". header ."
@@ -51,7 +52,7 @@ body {
   display: inline-flex;
   justify-content: space-between;
   align-items: center;
-  width: 36.5rem;
+  width: var(--game-view-mid-column-width);
 }
 
 #view-game-arena footer {
@@ -59,7 +60,7 @@ body {
 }
 
 #view-game-arena-footer-image img {
-  max-width: 36.5rem;
+  max-width: var(--game-view-mid-column-width);
 }
 
 .statistics-top {

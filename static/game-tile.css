@@ -1,7 +1,3 @@
-.tile {
-  height: 80px;
-}
-
 .picked,
 .target,
 .tile-face {
@@ -10,12 +6,12 @@
 
 .picked {
   /* outline-color: greenyellow; */
-  box-shadow: 0 0 3px 3px greenyellow;
+  box-shadow: 0 0 2px 2px greenyellow;
 }
 
 .target {
   /* outline-color: rgb(218 78 187); */
-  box-shadow: 0 0 3px 3px rgb(218 78 187);
+  box-shadow: 0 0 2px 2px rgb(218 78 187);
 }
 
 .hidden {
