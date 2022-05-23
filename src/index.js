@@ -17,6 +17,10 @@ const gameStatistics = new GameStatistics({
 });
 
 // Game bootstrapping
-const game = new GameArena({ rows, cols }, gameUI, gameStatistics);
+const game = new GameArena(
+  { rows, cols, initialDuration: 60 },
+  gameUI,
+  gameStatistics
+);
 
 game.star();

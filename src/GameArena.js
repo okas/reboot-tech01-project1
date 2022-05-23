@@ -11,6 +11,7 @@ import { TileMatcherChance } from "./TileMatcherChance.js";
  * @typedef {Object} Config
  * @property {number} rows
  * @property {number} cols
+ * @property {number} initialDuration
  * @property {number} badSwapTimeout Allows to control timing when to switch back user bar selection.
  * @property {number} timerInterval Main interval of cycle in game.
  *                    Various places in program use own coefficient, to be relates to this value.
@@ -24,6 +25,7 @@ export class GameArena {
   #cols;
   #timerInterval;
   #badSwapTimeout;
+  #initialDuration;
 
   /** @type {HTMLCollection & {Array<HTMLCollection>.indexOf(searchElement: HTMLCollection, fromIndex?: number): number}} */
   #elemTiles;
@@ -48,15 +50,22 @@ export class GameArena {
    * @param {GameStatistics} gameStatistics
    */
   constructor(
-    { rows, cols, badSwapTimeout = 500, timerInterval = 200 },
+    {
+      rows,
+      cols,
+      initialDuration = 60,
+      badSwapTimeout = 500,
+      timerInterval = 200,
+    },
     gameUI,
     gameStatistics
   ) {
-    this.#timerInterval = timerInterval;
-    this.#badSwapTimeout = badSwapTimeout;
-
     this.#rows = rows;
     this.#cols = cols;
+
+    this.#initialDuration = initialDuration;
+    this.#timerInterval = timerInterval;
+    this.#badSwapTimeout = badSwapTimeout;
 
     this.#ui = gameUI;
     this.#stats = gameStatistics;
@@ -66,35 +75,19 @@ export class GameArena {
     return this.#timerInterval;
   }
 
-  star() {
+  /**
+   * @param {number} initialDuration If omitted, that default from constructor will be used.
+   */
+  star(initialDuration) {
     this.#initTools();
 
     this.#countChances();
 
     this.#ui.enableCanvas();
 
-    this.#stats.timer = 60;
+    this.#stats.timer = initialDuration ?? this.#initialDuration;
 
     this.#gameTimerId = setInterval(this.#ticker.bind(this), 1000);
-  }
-
-  #ticker() {
-    if (this.#stats.timer > 0) {
-      this.#stats.timer--;
-    } else {
-      clearInterval(this.#gameTimerId);
-      // TODO: Shout GO!
-    }
-  }
-
-  #updateStatsMatch(matches) {
-    this.#stats.timer += matches;
-    this.#stats.matchCount += matches;
-  }
-
-  #updateStatsCombo(combos) {
-    this.#stats.timer += combos * 2;
-    this.#stats.comboCount += combos;
   }
 
   #initTools() {
@@ -132,6 +125,30 @@ export class GameArena {
     );
   }
 
+  #ticker() {
+    if (this.#stats.timer > 0) {
+      this.#stats.timer--;
+    } else {
+      this.#endTheGame();
+    }
+  }
+
+  #updateStatsMatch(matches) {
+    this.#stats.timer += matches;
+    this.#stats.matchCount += matches;
+  }
+
+  #updateStatsCombo(combos) {
+    this.#stats.timer += combos * 2;
+    this.#stats.comboCount += combos;
+  }
+
+  #endTheGame() {
+    clearInterval(this.#gameTimerId);
+    this.#ui.disableCanvas();
+    this.#handleGameOverOOT();
+  }
+
   /**
    * @param  {Event }
    */
@@ -157,7 +174,7 @@ export class GameArena {
     if (!needToCheckGO || this.#canContinue()) {
       this.#ui.enableCanvas();
     } else {
-      this.#handleGameOver();
+      this.#handleGameOverOOC();
     }
   }
 
@@ -404,11 +421,21 @@ export class GameArena {
    * @returns {boolean} `true`, if game continuation conditions are met.
    */
   #canContinue() {
-    return !!this.#countChances();
+    return this.#stats.timer > 0 && !!this.#countChances();
   }
 
-  #handleGameOver() {
-    console.debug("`Game over` conditions met!");
+  #handleGameOverOOT() {
+    console.debug("`Game over` conditions met: timeout!");
+
+    Promise.resolve().then(() => {
+      window.confirm("Time is out 😭\nWould you like to try again?") &&
+        this.#restartGame();
+    });
+  }
+
+  #handleGameOverOOC() {
+    console.debug("`Game over` conditions met: chances out!");
+
     Promise.resolve().then(() => {
       window.confirm("No chances left 😭\nWould you like to try again?") &&
         this.#restartGame();
