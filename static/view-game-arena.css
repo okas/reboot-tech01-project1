@@ -10,6 +10,11 @@ body {
   background-size: cover;
 }
 
+:root {
+  --canvas-tile-width: 75px;
+  --canvas-tile-height: 75px;
+}
+
 #view-game-arena {
   display: grid;
   grid-template-rows:
@@ -32,9 +37,9 @@ body {
 #game-canvas {
   grid-area: main;
   display: grid;
-  grid-template-columns: repeat(7, 80px);
+  grid-template-columns: repeat(7, var(--canvas-tile-width));
+  grid-template-rows: repeat(7, var(--canvas-tile-height));
   grid-auto-flow: row;
-  gap: 0.3rem;
 }
 
 #view-game-arena aside {

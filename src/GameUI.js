@@ -8,6 +8,8 @@ export class GameUI {
   /** @type {HTMLElement} */
   #elemCanvas;
 
+  static #cssValRegEx;
+
   /**
    * @param {string} canvasId HTML element ID, where game will be "mounted".
    */
@@ -23,7 +25,7 @@ export class GameUI {
   createBoard(rows, cols, clickHandlerFn) {
     this.#tileCounter = 0;
 
-    this.#resetCanvasLayout(cols);
+    this.#resetCanvasLayout(rows, cols);
 
     this.#elemCanvas.replaceChildren(
       ...this.tileFactory(rows * cols, clickHandlerFn)
@@ -85,14 +87,36 @@ export class GameUI {
     return tile;
   }
 
+  static {
+    this.#cssValRegEx = /\d+.?\d*px/i;
+  }
+
+  /**
+   * @param {number} quantifierVal
+   * @param {string} searchVal
+   */
+  static #createNewGridPropVal(quantifierVal, searchVal) {
+    return `repeat(${quantifierVal}, ${
+      GameUI.#cssValRegEx.exec(searchVal)[0]
+    })`;
+  }
+
   /**
    * @param {number} cols Column count.
    */
-  #resetCanvasLayout(cols) {
-    const { gridTemplateColumns } = window.getComputedStyle(this.#elemCanvas);
-    const extractedColWidth = /\d+.?\d*px/i.exec(gridTemplateColumns)[0];
-    const newValue = `repeat(${cols}, ${extractedColWidth})`;
+  #resetCanvasLayout(rows, cols) {
+    const { gridTemplateRows, gridTemplateColumns } = window.getComputedStyle(
+      this.#elemCanvas
+    );
 
-    this.#elemCanvas.style.gridTemplateColumns = newValue;
+    this.#elemCanvas.style.gridTemplateRows = GameUI.#createNewGridPropVal(
+      rows,
+      gridTemplateRows
+    );
+
+    this.#elemCanvas.style.gridTemplateColumns = GameUI.#createNewGridPropVal(
+      cols,
+      gridTemplateColumns
+    );
   }
 }
