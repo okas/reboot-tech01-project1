@@ -16,7 +16,7 @@ body {
     5.5rem
     auto
     auto;
-  grid-template-columns: auto 30rem auto;
+  grid-template-columns: auto 36.5rem auto;
   grid-auto-flow: row;
   row-gap: 3.5rem;
   /* stylelint-disable-next-line declaration-block-no-redundant-longhand-properties */
@@ -32,7 +32,7 @@ body {
 #game-canvas {
   grid-area: main;
   display: grid;
-  grid-template-columns: repeat(7, 65px);
+  grid-template-columns: repeat(7, 80px);
   grid-auto-flow: row;
   gap: 0.3rem;
 }
@@ -46,7 +46,7 @@ body {
   display: inline-flex;
   justify-content: space-between;
   align-items: center;
-  width: 30rem;
+  width: 36.5rem;
 }
 
 #view-game-arena footer {
@@ -54,7 +54,7 @@ body {
 }
 
 #view-game-arena-footer-image img {
-  max-width: 30rem;
+  max-width: 36.5rem;
 }
 
 .statistics-top {

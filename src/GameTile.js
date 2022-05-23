@@ -27,7 +27,7 @@ export class GameTile extends HTMLDivElement {
 
   static get cviSphereConf() {
     return {
-      size: 65,
+      size: 80,
       shine: 55,
       color2: "00ffff",
       shade: 105,
